@@ -17,7 +17,7 @@ Optimizes block entity rendering for:
 Instead of redrawing these every frame via vanilla's per-block-entity renderer,
 they get baked into the chunk mesh as static block models. The animated renderer
 only runs when there's actual motion (a lid opening, a bell swinging). The result
-is a major FPS gain in builds with lots of chests or signs.
+is a major FPS gain in builds with lots of chests or beds.
 
 ## Status
 
