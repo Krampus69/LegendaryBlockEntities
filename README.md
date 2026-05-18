@@ -3,18 +3,16 @@
 A Forge 1.20.1 port of [Enhanced Block Entities](https://github.com/FoundationGames/EnhancedBlockEntities)
 by FoundationGames, originally written for the Fabric mod loader.
 
-**Licensed under LGPL-3.0** — same as the original. See `LICENSE.txt` and `NOTICE` for full attribution.
+**Licensed under LGPL-3.0**. See `LICENSE.txt` and `NOTICE` for full attribution.
 
 ## What it does
 
 Optimizes block entity rendering for:
 
 - Chests (regular, trapped, ender)
-- Signs (standing, wall, hanging)
 - Bells
 - Beds
 - Shulker boxes
-- Decorated pots
 
 Instead of redrawing these every frame via vanilla's per-block-entity renderer,
 they get baked into the chunk mesh as static block models. The animated renderer
