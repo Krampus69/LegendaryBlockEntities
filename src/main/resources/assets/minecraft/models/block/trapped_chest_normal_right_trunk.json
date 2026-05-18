@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/template_chest_right_trunk", "textures": { "chest": "minecraft:entity/chest/trapped_right" } }

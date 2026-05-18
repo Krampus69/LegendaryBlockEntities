@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.krampus.legendaryblockentities.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "legendaryblockentities.refmap.json",
+  "client": [
+    "BlockEntityRenderDispatcherMixin",
+    "BlockStateBaseMixin",
+    "ChestBlockEntityMixin",
+    "BellBlockEntityMixin",
+    "ShulkerBoxBlockEntityMixin",
+    "EnderChestBlockEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

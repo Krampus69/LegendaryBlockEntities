@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full":  "minecraft:block/chest_normal_right_full",
+  "trunk": "minecraft:block/chest_normal_right_trunk"
+}

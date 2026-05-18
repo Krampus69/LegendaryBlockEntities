@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full":  "minecraft:block/bell_ceiling_with_bell",
+  "trunk": "minecraft:block/bell_ceiling"
+}

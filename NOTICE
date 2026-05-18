@@ -1,0 +1,44 @@
+Legendary Block Entities
+========================
+
+This mod is a Forge 1.20.1 port of Enhanced Block Entities, originally
+created by FoundationGames for the Fabric mod loader.
+
+  Original mod:      Enhanced Block Entities
+  Original author:   FoundationGames
+  Original source:   https://github.com/FoundationGames/EnhancedBlockEntities
+  Original license:  GNU Lesser General Public License v3.0 (LGPL-3.0)
+
+This port is distributed under the same license (LGPL-3.0). See LICENSE.txt
+for the full license text.
+
+The original author has publicly granted permission for forks and ports
+provided the license is respected.
+
+Modifications from the original
+-------------------------------
+This port is based on Enhanced Block Entities 0.9+1.20 (Fabric 1.20.1 source).
+
+Changes made for the Forge 1.20.1 port:
+  - Replaced Fabric mod loader entry points and lifecycle hooks with
+    Forge equivalents (@Mod, FMLClientSetupEvent, ModEventBus).
+  - Replaced the Fabric Rendering API (FabricBakedModel, QuadEmitter,
+    RenderContext) with Forge's IDynamicBakedModel + ModelData system.
+  - Replaced Fabric's ModelResourceProvider with Forge's ModelEvent
+    (ModifyBakingResult / RegisterAdditional).
+  - Replaced Fabric's BlockRenderLayerMap with Forge's
+    ItemBlockRenderTypes.setRenderLayer.
+  - Replaced the LifecycledResourceManagerImplMixin resource pack
+    injection with Forge's AddPackFindersEvent.
+  - Replaced WorldRenderEvents with Forge's RenderLevelStageEvent.
+  - Replaced the ModelPredicateProviderRegistry christmas-chest predicate
+    with Forge's ItemProperties.register.
+  - Ported the Fabric access widener to a Forge access transformer.
+  - Removed the Indium dependency note (irrelevant on Forge).
+
+Author of the port
+------------------
+Krampus
+
+The port author claims no ownership over the original design,
+architecture, or algorithms — credit for those belongs to FoundationGames.

@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full":  "minecraft:block/light_gray_shulker_box_full",
+  "trunk": "minecraft:block/light_gray_shulker_box_bottom"
+}

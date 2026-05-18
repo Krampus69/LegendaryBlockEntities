@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/template_shulker_box_bottom", "textures": { "shulker": "minecraft:entity/shulker/shulker_orange" } }

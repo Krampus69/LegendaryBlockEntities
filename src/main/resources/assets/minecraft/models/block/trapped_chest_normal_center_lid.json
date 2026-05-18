@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/template_chest_center_lid",
+  "textures": {
+    "chest": "minecraft:entity/chest/trapped"
+  }
+}
