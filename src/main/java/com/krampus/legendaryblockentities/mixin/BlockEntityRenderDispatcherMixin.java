@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,11 +30,11 @@ public class BlockEntityRenderDispatcherMixin {
             MultiBufferSource buffer,
             CallbackInfo ci) {
 
-        if (!LegendaryBlockEntityRegistry.ENTITIES.containsKey(blockEntity.getType())) return;
-        if (!LegendaryBlockEntityRegistry.BLOCKS.contains(blockEntity.getBlockState().getBlock())) return;
+        Block block = blockEntity.getBlockState().getBlock();
+        if (!LegendaryBlockEntityRegistry.BLOCKS.contains(block)) return;
 
         Pair<BlockEntityRenderCondition, BlockEntityRendererOverride> entry =
-                LegendaryBlockEntityRegistry.ENTITIES.get(blockEntity.getType());
+                LegendaryBlockEntityRegistry.ENTITIES.get(block);
 
         if (entry.getFirst().shouldRender(blockEntity)) {
             Level level = blockEntity.getLevel();

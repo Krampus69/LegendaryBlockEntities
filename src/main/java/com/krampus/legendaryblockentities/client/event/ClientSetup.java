@@ -24,7 +24,6 @@ public class ClientSetup {
                 ItemBlockRenderTypes.setRenderLayer(Blocks.ENDER_CHEST, RenderType.solid());
                 LBESetup.setupChests();
             }
-
             if (Config.OPTIMIZE_BEDS.get()) {
                 LBESetup.setupBeds();
             }
@@ -45,6 +44,38 @@ public class ClientSetup {
                 };
                 for (Block s : shulkers) ItemBlockRenderTypes.setRenderLayer(s, RenderType.cutoutMipped());
                 LBESetup.setupShulkerBoxes();
+            }
+
+            if (Config.OPTIMIZE_QUARK_CHESTS.get()) {
+                try {
+                    if (net.minecraftforge.fml.ModList.get().isLoaded("quark")) {
+                        LBESetup.setupQuarkChests();
+                    }
+                } catch (Throwable t) {
+                    LegendaryBlockEntities.LOG.warn("Quark chest setup failed", t);
+                }
+            }
+
+            if (Config.OPTIMIZE_BETTER_END_CHESTS.get()) {
+                try {
+                    if (net.minecraftforge.fml.ModList.get().isLoaded("betterend")
+                            && net.minecraftforge.fml.ModList.get().isLoaded("bclib")) {
+                        LBESetup.setupBetterEndChests();
+                    }
+                } catch (Throwable t) {
+                    LegendaryBlockEntities.LOG.warn("BetterEnd chest setup failed", t);
+                }
+            }
+
+            if (Config.OPTIMIZE_BETTER_NETHER_CHESTS.get()) {
+                try {
+                    if (net.minecraftforge.fml.ModList.get().isLoaded("betternether")
+                            && net.minecraftforge.fml.ModList.get().isLoaded("bclib")) {
+                        LBESetup.setupBetterNetherChests();
+                    }
+                } catch (Throwable t) {
+                    LegendaryBlockEntities.LOG.warn("BetterNether chest setup failed", t);
+                }
             }
         });
     }

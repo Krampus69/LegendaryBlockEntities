@@ -12,8 +12,9 @@ import java.util.Map;
 import java.util.Set;
 
 public final class LegendaryBlockEntityRegistry {
-    public static final Map<BlockEntityType<?>, Pair<BlockEntityRenderCondition, BlockEntityRendererOverride>> ENTITIES = new HashMap<>();
+    public static final Map<Block, Pair<BlockEntityRenderCondition, BlockEntityRendererOverride>> ENTITIES = new HashMap<>();
     public static final Set<Block> BLOCKS = new HashSet<>();
+    public static final Set<BlockEntityType<?>> BLOCK_ENTITY_TYPES = new HashSet<>();
 
     private LegendaryBlockEntityRegistry() {}
 
@@ -21,7 +22,8 @@ public final class LegendaryBlockEntityRegistry {
                                 BlockEntityType<?> type,
                                 BlockEntityRenderCondition condition,
                                 BlockEntityRendererOverride renderer) {
-        ENTITIES.put(type, Pair.of(condition, renderer));
+        ENTITIES.put(block, Pair.of(condition, renderer));
         BLOCKS.add(block);
+        BLOCK_ENTITY_TYPES.add(type);
     }
 }

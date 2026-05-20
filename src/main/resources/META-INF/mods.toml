@@ -27,3 +27,31 @@ displayURL = "https://github.com/krampus/LegendaryBlockEntities"
     versionRange = "${minecraft_version_range}"
     ordering = "NONE"
     side = "CLIENT"
+
+[[dependencies.legendaryblockentities]]
+modId="quark"
+mandatory=false
+versionRange="[0,)"
+ordering="AFTER"
+side="CLIENT"
+
+[[dependencies.legendaryblockentities]]
+modId="betterend"
+mandatory=false
+versionRange="[0,)"
+ordering="AFTER"
+side="CLIENT"
+
+[[dependencies.legendaryblockentities]]
+modId="bclib"
+mandatory=false
+versionRange="[0,)"
+ordering="AFTER"
+side="CLIENT"
+
+[[dependencies.legendaryblockentities]]
+modId="betternether"
+mandatory=false
+versionRange="[0,)"
+ordering="AFTER"
+side="CLIENT"

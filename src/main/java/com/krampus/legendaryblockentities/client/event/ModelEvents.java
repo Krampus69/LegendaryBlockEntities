@@ -11,12 +11,16 @@ import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Mod.EventBusSubscriber(modid = LegendaryBlockEntities.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ModelEvents {
 
+    public static final Map<String, BakedModel> quarkChestLids = new HashMap<>();
+    public static final Map<String, BakedModel> betterEndChestLids = new HashMap<>();
     public static volatile BakedModel chestLidModel = null;
     public static volatile BakedModel chestLeftLidModel = null;
     public static volatile BakedModel chestRightLidModel = null;
@@ -35,50 +39,63 @@ public class ModelEvents {
 
     @SubscribeEvent
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
-        var models = event.getModels();
-
-        for (var entry : models.entrySet()) {
-            String key = entry.getKey().toString();
-            if      (key.contains("trapped_chest_normal_left_lid"))   trappedChestLeftLidModel = entry.getValue();
-            else if (key.contains("trapped_chest_normal_right_lid"))  trappedChestRightLidModel = entry.getValue();
-            else if (key.contains("trapped_chest_normal_center_lid")) trappedChestLidModel = entry.getValue();
-            else if (key.contains("ender_chest_normal_center_lid"))   enderChestLidModel = entry.getValue();
-            else if (key.contains("chest_normal_left_lid"))           chestLeftLidModel = entry.getValue();
-            else if (key.contains("chest_normal_right_lid"))          chestRightLidModel = entry.getValue();
-            else if (key.contains("chest_normal_center_lid"))         chestLidModel = entry.getValue();
-            else if (key.equals("minecraft:block/bell_body"))         bellBodyModel = entry.getValue();
-        }
-
+        // Reset state
+        chestLidModel = chestLeftLidModel = chestRightLidModel = null;
+        trappedChestLidModel = trappedChestLeftLidModel = trappedChestRightLidModel = null;
+        enderChestLidModel = bellBodyModel = uncoloredShulkerLidModel = null;
         shulkerLidModels.clear();
-        uncoloredShulkerLidModel = null;
-        for (var entry : models.entrySet()) {
+        quarkChestLids.clear();
+        betterEndChestLids.clear();
+
+        // Single pass over all baked models
+        for (var entry : event.getModels().entrySet()) {
             String key = entry.getKey().toString();
-            if (!key.startsWith("minecraft:block/")) continue;
-            String suffix = key.substring("minecraft:block/".length());
-            if (suffix.equals("shulker_box_lid")) {
-                uncoloredShulkerLidModel = entry.getValue();
-            } else if (suffix.endsWith("_shulker_box_lid")) {
-                String name = suffix.substring(0, suffix.length() - "_shulker_box_lid".length());
-                DyeColor color = DyeColor.byName(name, null);
-                if (color != null) shulkerLidModels.put(color, entry.getValue());
+            BakedModel model = entry.getValue();
+
+            if      (key.contains("trapped_chest_normal_left_lid"))   trappedChestLeftLidModel = model;
+            else if (key.contains("trapped_chest_normal_right_lid"))  trappedChestRightLidModel = model;
+            else if (key.contains("trapped_chest_normal_center_lid")) trappedChestLidModel = model;
+            else if (key.contains("ender_chest_normal_center_lid"))   enderChestLidModel = model;
+            else if (key.contains("chest_normal_left_lid"))           chestLeftLidModel = model;
+            else if (key.contains("chest_normal_right_lid"))          chestRightLidModel = model;
+            else if (key.contains("chest_normal_center_lid"))         chestLidModel = model;
+            else if (key.equals("minecraft:block/bell_body"))         bellBodyModel = model;
+            else if (key.startsWith("minecraft:block/") && key.endsWith("shulker_box_lid")) {
+                String suffix = key.substring("minecraft:block/".length());
+                if (suffix.equals("shulker_box_lid")) {
+                    uncoloredShulkerLidModel = model;
+                } else {
+                    String name = suffix.substring(0, suffix.length() - "_shulker_box_lid".length());
+                    DyeColor color = DyeColor.byName(name, null);
+                    if (color != null) shulkerLidModels.put(color, model);
+                }
+            }
+            else if (key.startsWith("quark:block/") && key.endsWith("_lid")) {
+                String name = key.substring("quark:block/".length(), key.length() - "_lid".length());
+                quarkChestLids.put(name, model);
+            }
+            else if (key.startsWith("legendaryblockentities:block/be_") && key.endsWith("_lid")) {
+                String name = key.substring("legendaryblockentities:block/be_".length(), key.length() - "_lid".length());
+                betterEndChestLids.put(name, model);
             }
         }
 
-        warnIfNull("chest_normal_center_lid", chestLidModel);
-        warnIfNull("chest_normal_left_lid", chestLeftLidModel);
-        warnIfNull("chest_normal_right_lid", chestRightLidModel);
-        warnIfNull("trapped_chest_normal_center_lid", trappedChestLidModel);
-        warnIfNull("trapped_chest_normal_left_lid", trappedChestLeftLidModel);
-        warnIfNull("trapped_chest_normal_right_lid", trappedChestRightLidModel);
-        warnIfNull("ender_chest_normal_center_lid", enderChestLidModel);
-        warnIfNull("bell_body", bellBodyModel);
-        if (uncoloredShulkerLidModel == null) {
-            LegendaryBlockEntities.LOG.error("shulker_box_lid NOT FOUND");
-        }
+        // Consolidated missing-model report
+        List<String> missing = new ArrayList<>();
+        if (chestLidModel == null)             missing.add("chest_normal_center_lid");
+        if (chestLeftLidModel == null)         missing.add("chest_normal_left_lid");
+        if (chestRightLidModel == null)        missing.add("chest_normal_right_lid");
+        if (trappedChestLidModel == null)      missing.add("trapped_chest_normal_center_lid");
+        if (trappedChestLeftLidModel == null)  missing.add("trapped_chest_normal_left_lid");
+        if (trappedChestRightLidModel == null) missing.add("trapped_chest_normal_right_lid");
+        if (enderChestLidModel == null)        missing.add("ender_chest_normal_center_lid");
+        if (bellBodyModel == null)             missing.add("bell_body");
+        if (uncoloredShulkerLidModel == null)  missing.add("shulker_box_lid");
         for (DyeColor c : DyeColor.values()) {
-            if (!shulkerLidModels.containsKey(c)) {
-                LegendaryBlockEntities.LOG.error("{}_shulker_box_lid NOT FOUND", c.getName());
-            }
+            if (!shulkerLidModels.containsKey(c)) missing.add(c.getName() + "_shulker_box_lid");
+        }
+        if (!missing.isEmpty()) {
+            LegendaryBlockEntities.LOG.error("Missing baked models: {}", missing);
         }
 
         for (var entry : LegendaryBlockEntityRegistry.ENTITIES.values()) {
@@ -110,6 +127,28 @@ public class ModelEvents {
             event.register(new ResourceLocation("minecraft", "block/" + color + "_bed_foot"));
         }
 
+        String[] betterEndChests = {
+                "lucernia_chest", "dragon_tree_chest", "end_lotus_chest", "helix_tree_chest",
+                "jellyshroom_chest", "lacugrove_chest", "mossy_glowshroom_chest",
+                "pythadendron_chest", "tenanea_chest", "umbrella_tree_chest"
+        };
+        String[] betterNetherChests = {
+                "anchor_tree_chest", "crimson_chest", "mushroom_fir_chest", "mushroom_fir_trimmed_chest",
+                "nether_mushroom_chest", "nether_reed_chest", "nether_sakura_chest", "rubeus_chest",
+                "stalagnate_chest", "warped_chest", "wart_chest", "willow_chest"
+        };
+        String[] allBclibChests = new String[betterEndChests.length + betterNetherChests.length];
+        System.arraycopy(betterEndChests, 0, allBclibChests, 0, betterEndChests.length);
+        System.arraycopy(betterNetherChests, 0, allBclibChests, betterEndChests.length, betterNetherChests.length);
+
+        for (String name : allBclibChests) {
+            for (String half : new String[]{ "", "_left", "_right" }) {
+                event.register(new ResourceLocation("legendaryblockentities", "block/be_" + name + half + "_lid"));
+                event.register(new ResourceLocation("legendaryblockentities", "block/be_" + name + half + "_full"));
+                event.register(new ResourceLocation("legendaryblockentities", "block/be_" + name + half + "_trunk"));
+            }
+        }
+
         String[] shulkerColors = {"", "black_", "blue_", "brown_", "cyan_", "gray_", "green_",
                 "light_blue_", "light_gray_", "lime_", "magenta_", "orange_", "pink_",
                 "purple_", "red_", "white_", "yellow_"};
@@ -119,9 +158,17 @@ public class ModelEvents {
             event.register(new ResourceLocation("minecraft", "block/" + c + "shulker_box_lid"));
             event.register(new ResourceLocation("minecraft", "block/dynamic_" + c + "shulker_box"));
         }
-    }
-
-    private static void warnIfNull(String name, BakedModel m) {
-        if (m == null) LegendaryBlockEntities.LOG.error("{} NOT FOUND", name);
+        String[] quarkWoods = {"oak", "spruce", "birch", "jungle", "dark_oak", "acacia", "mangrove", "cherry",
+                "bamboo", "crimson", "warped", "azalea", "blossom", "ancient", "nether_brick", "purpur", "prismarine"};
+        for (String wood : quarkWoods) {
+            for (String type : new String[]{"_chest", "_trapped_chest"}) {
+                for (String half : new String[]{"center", "left", "right"}) {
+                    for (String piece : new String[]{"full", "trunk", "lid"}) {
+                        event.register(new ResourceLocation("quark", "block/" + wood + type + "_" + half + "_" + piece));
+                    }
+                    event.register(new ResourceLocation("quark", "block/" + wood + type + "_" + half));
+                }
+            }
+        }
     }
 }

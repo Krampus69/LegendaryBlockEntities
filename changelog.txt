@@ -1,4 +1,7 @@
 legendaryblockentities-1.20.1 Changelog
-0.2.0
+0.3.0
 ====
-Added a config to disable blocks
+Added compatibility with Quark Chests
+Added compatibility with Better Nether Chests
+Added compatibility with Better End Chests
+Added compatibility with Iron Chests (Chests)
