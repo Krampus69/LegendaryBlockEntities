@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/ic_chest_full",
+  "textures": {
+    "texture": "ironchest:model/diamond_chest",
+    "particle": "ironchest:model/diamond_chest"
+  }
+}

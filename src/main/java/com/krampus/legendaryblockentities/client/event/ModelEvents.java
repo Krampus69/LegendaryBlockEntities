@@ -31,6 +31,7 @@ public class ModelEvents {
     public static volatile BakedModel bellBodyModel = null;
     public static volatile BakedModel uncoloredShulkerLidModel = null;
     public static final Map<DyeColor, BakedModel> shulkerLidModels = new HashMap<>();
+    public static final Map<String, BakedModel> ironChestLids = new HashMap<>();
 
     @SubscribeEvent
     public static void onRegisterGeometryLoaders(ModelEvent.RegisterGeometryLoaders event) {
@@ -46,6 +47,7 @@ public class ModelEvents {
         shulkerLidModels.clear();
         quarkChestLids.clear();
         betterEndChestLids.clear();
+        ironChestLids.clear();
 
         // Single pass over all baked models
         for (var entry : event.getModels().entrySet()) {
@@ -60,6 +62,10 @@ public class ModelEvents {
             else if (key.contains("chest_normal_right_lid"))          chestRightLidModel = model;
             else if (key.contains("chest_normal_center_lid"))         chestLidModel = model;
             else if (key.equals("minecraft:block/bell_body"))         bellBodyModel = model;
+            else if (key.startsWith("legendaryblockentities:block/ic_") && key.endsWith("_lid")) {
+                String name = key.substring("legendaryblockentities:block/ic_".length(), key.length() - "_lid".length());
+                ironChestLids.put(name, model);
+            }
             else if (key.startsWith("minecraft:block/") && key.endsWith("shulker_box_lid")) {
                 String suffix = key.substring("minecraft:block/".length());
                 if (suffix.equals("shulker_box_lid")) {
@@ -140,6 +146,17 @@ public class ModelEvents {
         String[] allBclibChests = new String[betterEndChests.length + betterNetherChests.length];
         System.arraycopy(betterEndChests, 0, allBclibChests, 0, betterEndChests.length);
         System.arraycopy(betterNetherChests, 0, allBclibChests, betterEndChests.length, betterNetherChests.length);
+
+        String[] ironChests = {
+                "iron_chest", "gold_chest", "diamond_chest", "copper_chest", "obsidian_chest", "dirt_chest",
+                "trapped_iron_chest", "trapped_gold_chest", "trapped_diamond_chest",
+                "trapped_copper_chest", "trapped_obsidian_chest", "trapped_dirt_chest"
+        };
+        for (String name : ironChests) {
+            event.register(new ResourceLocation("legendaryblockentities", "block/ic_" + name + "_lid"));
+            event.register(new ResourceLocation("legendaryblockentities", "block/ic_" + name + "_full"));
+            event.register(new ResourceLocation("legendaryblockentities", "block/ic_" + name + "_trunk"));
+        }
 
         for (String name : allBclibChests) {
             for (String half : new String[]{ "", "_left", "_right" }) {

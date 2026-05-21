@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full": "legendaryblockentities:block/ic_iron_chest_full",
+  "trunk": "legendaryblockentities:block/ic_iron_chest_trunk"
+}

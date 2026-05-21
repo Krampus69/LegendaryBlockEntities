@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/template_chest_center_trunk", "textures": { "chest": "quark:quark_variant_chests/azalea/trap" } }

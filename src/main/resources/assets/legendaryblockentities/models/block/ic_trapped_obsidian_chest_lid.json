@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_lid",
+  "textures": {
+    "texture": "ironchest:model/trapped_obsidian_chest",
+    "particle": "ironchest:model/trapped_obsidian_chest"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full": "legendaryblockentities:block/be_lacugrove_chest_left_full",
+  "trunk": "legendaryblockentities:block/be_lacugrove_chest_left_trunk"
+}

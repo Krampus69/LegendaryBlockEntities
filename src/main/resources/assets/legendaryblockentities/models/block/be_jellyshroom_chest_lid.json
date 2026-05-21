@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_lid",
+  "textures": {
+    "texture": "betterend:block/chest/jellyshroom_chest",
+    "particle": "betterend:block/chest/jellyshroom_chest"
+  }
+}

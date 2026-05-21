@@ -93,6 +93,66 @@ public final class LBESetup {
                 "stalagnate_chest", "warped_chest", "wart_chest", "willow_chest"
         });
     }
+
+    public static void setupIronChests() {
+        var forgeReg = net.minecraftforge.registries.ForgeRegistries.BLOCKS;
+
+        // block id -> BE type field name in IronChestsBlockEntityTypes
+        String[] names = {
+                "iron_chest", "gold_chest", "diamond_chest", "copper_chest", "obsidian_chest", "dirt_chest",
+                "trapped_iron_chest", "trapped_gold_chest", "trapped_diamond_chest",
+                "trapped_copper_chest", "trapped_obsidian_chest", "trapped_dirt_chest"
+        };
+
+        Class<?> typesCls;
+        try {
+            typesCls = Class.forName("com.progwml6.ironchest.common.block.entity.IronChestsBlockEntityTypes");
+        } catch (ClassNotFoundException e) {
+            LegendaryBlockEntities.LOG.warn("Iron Chests BE types class not found: {}", e.getMessage());
+            return;
+        }
+
+        Function<BlockEntity, Integer> singleSelector = be -> 0;
+        int registered = 0;
+
+        for (String name : names) {
+            Block block = forgeReg.getValue(new net.minecraft.resources.ResourceLocation("ironchest", name));
+            if (block == null) continue;
+
+            // RegistryObject<BlockEntityType<?>> field, name = uppercased block id
+            BlockEntityType<?> beType;
+            try {
+                Object regObj = typesCls.getField(name.toUpperCase(java.util.Locale.ROOT)).get(null);
+                // RegistryObject has a get() method
+                beType = (BlockEntityType<?>) regObj.getClass().getMethod("get").invoke(regObj);
+            } catch (ReflectiveOperationException e) {
+                LegendaryBlockEntities.LOG.warn("Could not resolve Iron Chests BE type for {}: {}", name, e.getMessage());
+                continue;
+            }
+            if (beType == null) continue;
+
+            final String key = name;
+            Supplier<BakedModel[]> supplier = () -> {
+                BakedModel lid = lookupIron(key);
+                return new BakedModel[]{ lid };
+            };
+
+            LegendaryBlockEntityRegistry.register(
+                    block, beType,
+                    BlockEntityRenderCondition.CHEST,
+                    new ChestBlockEntityRendererOverride(supplier, singleSelector)
+            );
+            registered++;
+        }
+        LegendaryBlockEntities.LOG.info("Registered {} Iron Chests variants", registered);
+    }
+
+    private static BakedModel lookupIron(String name) {
+        BakedModel m = ModelEvents.ironChestLids.get(name);
+        return m != null ? m : Minecraft.getInstance().getModelManager().getBlockModelShaper()
+                .getBlockModel(Blocks.STONE.defaultBlockState());
+    }
+
     private static BakedModel lookupBetterEnd(String name) {
         BakedModel m = ModelEvents.betterEndChestLids.get(name);
         return m != null ? m : Minecraft.getInstance().getModelManager().getBlockModelShaper()
@@ -177,12 +237,11 @@ public final class LBESetup {
             }
             if (beType == null) continue;
 
-            String prefix = path;
 
             Supplier<BakedModel[]> supplier = () -> new BakedModel[]{
-                    lookupQuark(prefix + "_center"),
-                    lookupQuark(prefix + "_left"),
-                    lookupQuark(prefix + "_right")
+                    lookupQuark(path + "_center"),
+                    lookupQuark(path + "_left"),
+                    lookupQuark(path + "_right")
             };
 
             LegendaryBlockEntityRegistry.register(

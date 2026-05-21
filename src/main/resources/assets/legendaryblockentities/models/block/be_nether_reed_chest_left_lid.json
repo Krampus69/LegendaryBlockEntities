@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_left_lid",
+  "textures": {
+    "texture": "betternether:block/chest/nether_reed_chest_left",
+    "particle": "betternether:block/chest/nether_reed_chest_left"
+  }
+}

@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/template_chest_center_full_nolatch", "textures": { "chest": "quark:quark_variant_chests/crimson/normal" } }

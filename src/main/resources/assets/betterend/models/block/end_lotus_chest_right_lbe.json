@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full": "legendaryblockentities:block/be_end_lotus_chest_right_full",
+  "trunk": "legendaryblockentities:block/be_end_lotus_chest_right_trunk"
+}

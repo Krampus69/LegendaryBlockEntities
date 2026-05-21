@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_left_trunk",
+  "textures": {
+    "texture": "betterend:entity/chest/lacugrove_chest_left",
+    "particle": "betterend:entity/chest/lacugrove_chest_left"
+  }
+}

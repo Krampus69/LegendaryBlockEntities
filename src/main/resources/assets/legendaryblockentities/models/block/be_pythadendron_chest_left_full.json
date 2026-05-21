@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_left_full",
+  "textures": {
+    "texture": "betterend:entity/chest/pythadendron_chest_left",
+    "particle": "betterend:entity/chest/pythadendron_chest_left"
+  }
+}

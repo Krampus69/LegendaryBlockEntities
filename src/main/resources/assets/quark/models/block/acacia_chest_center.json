@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full":  "quark:block/acacia_chest_center_full",
+  "trunk": "quark:block/acacia_chest_center_trunk"
+}

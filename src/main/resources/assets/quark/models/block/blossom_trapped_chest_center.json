@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full":  "quark:block/blossom_trapped_chest_center_full",
+  "trunk": "quark:block/blossom_trapped_chest_center_trunk"
+}

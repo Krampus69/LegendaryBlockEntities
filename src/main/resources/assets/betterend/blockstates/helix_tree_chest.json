@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "facing=north,type=single": {
+      "model": "betterend:block/helix_tree_chest_lbe"
+    },
+    "facing=north,type=left": {
+      "model": "betterend:block/helix_tree_chest_left_lbe"
+    },
+    "facing=north,type=right": {
+      "model": "betterend:block/helix_tree_chest_right_lbe"
+    },
+    "facing=east,type=single": {
+      "model": "betterend:block/helix_tree_chest_lbe",
+      "y": 90
+    },
+    "facing=east,type=left": {
+      "model": "betterend:block/helix_tree_chest_left_lbe",
+      "y": 90
+    },
+    "facing=east,type=right": {
+      "model": "betterend:block/helix_tree_chest_right_lbe",
+      "y": 90
+    },
+    "facing=south,type=single": {
+      "model": "betterend:block/helix_tree_chest_lbe",
+      "y": 180
+    },
+    "facing=south,type=left": {
+      "model": "betterend:block/helix_tree_chest_left_lbe",
+      "y": 180
+    },
+    "facing=south,type=right": {
+      "model": "betterend:block/helix_tree_chest_right_lbe",
+      "y": 180
+    },
+    "facing=west,type=single": {
+      "model": "betterend:block/helix_tree_chest_lbe",
+      "y": 270
+    },
+    "facing=west,type=left": {
+      "model": "betterend:block/helix_tree_chest_left_lbe",
+      "y": 270
+    },
+    "facing=west,type=right": {
+      "model": "betterend:block/helix_tree_chest_right_lbe",
+      "y": 270
+    }
+  }
+}

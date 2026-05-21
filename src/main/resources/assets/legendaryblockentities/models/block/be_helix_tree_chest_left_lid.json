@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_left_lid",
+  "textures": {
+    "texture": "betterend:entity/chest/helix_tree_chest_left",
+    "particle": "betterend:entity/chest/helix_tree_chest_left"
+  }
+}

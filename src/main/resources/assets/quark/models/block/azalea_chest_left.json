@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full":  "quark:block/azalea_chest_left_full",
+  "trunk": "quark:block/azalea_chest_left_trunk"
+}

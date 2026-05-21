@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full":  "quark:block/dark_oak_trapped_chest_center_full",
+  "trunk": "quark:block/dark_oak_trapped_chest_center_trunk"
+}

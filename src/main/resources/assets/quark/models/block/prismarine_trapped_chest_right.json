@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full":  "quark:block/prismarine_trapped_chest_right_full",
+  "trunk": "quark:block/prismarine_trapped_chest_right_trunk"
+}

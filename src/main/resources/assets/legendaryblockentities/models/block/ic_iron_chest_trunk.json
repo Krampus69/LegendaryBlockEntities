@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/ic_chest_trunk",
+  "textures": {
+    "texture": "ironchest:model/iron_chest",
+    "particle": "ironchest:model/iron_chest"
+  }
+}

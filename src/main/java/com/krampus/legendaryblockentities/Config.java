@@ -16,6 +16,7 @@ public final class Config {
     public static final ForgeConfigSpec.BooleanValue OPTIMIZE_QUARK_CHESTS;
     public static final ForgeConfigSpec.BooleanValue OPTIMIZE_BETTER_END_CHESTS;
     public static final ForgeConfigSpec.BooleanValue OPTIMIZE_BETTER_NETHER_CHESTS;
+    public static final ForgeConfigSpec.BooleanValue OPTIMIZE_IRON_CHESTS;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -36,6 +37,8 @@ public final class Config {
                 .define("better_end_chests", true);
         OPTIMIZE_BETTER_NETHER_CHESTS = b.comment("Optimize BetterNether chests (requires BetterNether + BCLib).")
                 .define("better_nether_chests", true);
+        OPTIMIZE_IRON_CHESTS = b.comment("Optimize Iron Chests (requires Iron Chests). Crystal chests are excluded.")
+                .define("iron_chests", true);
 
         b.pop();
         SPEC = b.build();
@@ -45,9 +48,10 @@ public final class Config {
 
     @SubscribeEvent
     public static void onLoad(ModConfigEvent.Loading event) {
-        LegendaryBlockEntities.LOG.info("Config loaded: chests={}, beds={}, bells={}, shulkers={}, quark={}, betterend={}, betternether={}",
+        LegendaryBlockEntities.LOG.info("Config loaded: chests={}, beds={}, bells={}, shulkers={}, quark={}, betterend={}, betternether={}, iron={}",
                 OPTIMIZE_CHESTS.get(), OPTIMIZE_BEDS.get(), OPTIMIZE_BELLS.get(),
                 OPTIMIZE_SHULKER_BOXES.get(), OPTIMIZE_QUARK_CHESTS.get(),
-                OPTIMIZE_BETTER_END_CHESTS.get(), OPTIMIZE_BETTER_NETHER_CHESTS.get());
+                OPTIMIZE_BETTER_END_CHESTS.get(), OPTIMIZE_BETTER_NETHER_CHESTS.get(),
+                OPTIMIZE_IRON_CHESTS.get());
     }
 }

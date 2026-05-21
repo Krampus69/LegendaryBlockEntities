@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full":  "quark:block/mangrove_chest_left_full",
+  "trunk": "quark:block/mangrove_chest_left_trunk"
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_lid",
+  "textures": {
+    "texture": "betternether:block/chest/rubeus_chest",
+    "particle": "betternether:block/chest/rubeus_chest"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_right_trunk",
+  "textures": {
+    "texture": "betterend:entity/chest/dragon_tree_chest_right",
+    "particle": "betterend:entity/chest/dragon_tree_chest_right"
+  }
+}

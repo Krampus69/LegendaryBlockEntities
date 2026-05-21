@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full": "legendaryblockentities:block/ic_gold_chest_full",
+  "trunk": "legendaryblockentities:block/ic_gold_chest_trunk"
+}

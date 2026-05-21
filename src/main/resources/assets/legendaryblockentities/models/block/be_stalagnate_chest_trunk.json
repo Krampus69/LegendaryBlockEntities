@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_trunk",
+  "textures": {
+    "texture": "betternether:block/chest/stalagnate_chest",
+    "particle": "betternether:block/chest/stalagnate_chest"
+  }
+}

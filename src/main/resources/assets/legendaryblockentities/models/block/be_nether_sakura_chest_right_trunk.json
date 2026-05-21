@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_right_trunk",
+  "textures": {
+    "texture": "betternether:block/chest/nether_sakura_chest_right",
+    "particle": "betternether:block/chest/nether_sakura_chest_right"
+  }
+}

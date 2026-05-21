@@ -1,0 +1,5 @@
+{
+  "loader": "legendaryblockentities:dynamic",
+  "full":  "quark:block/nether_brick_chest_center_full",
+  "trunk": "quark:block/nether_brick_chest_center_trunk"
+}

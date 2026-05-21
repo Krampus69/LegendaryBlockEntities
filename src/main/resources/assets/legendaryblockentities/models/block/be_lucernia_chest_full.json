@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_full",
+  "textures": {
+    "texture":  "betterend:block/chest/lucernia_chest",
+    "particle": "betterend:block/chest/lucernia_chest"
+  }
+}

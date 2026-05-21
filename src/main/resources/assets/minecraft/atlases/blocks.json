@@ -5,6 +5,7 @@
     { "type": "directory", "source": "entity/bell", "prefix": "entity/bell/" },
     { "type": "directory", "source": "entity/shulker", "prefix": "entity/shulker/" },
     { "type": "directory", "source": "quark_variant_chests", "prefix": "quark_variant_chests/" },
-    { "type": "directory", "source": "block/chest", "prefix": "block/chest/" }
+    { "type": "directory", "source": "block/chest", "prefix": "block/chest/" },
+    { "type": "directory", "source": "model", "prefix": "model/" }
   ]
 }

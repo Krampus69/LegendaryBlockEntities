@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_right_full",
+  "textures": {
+    "texture": "betterend:entity/chest/tenanea_chest_right",
+    "particle": "betterend:entity/chest/tenanea_chest_right"
+  }
+}

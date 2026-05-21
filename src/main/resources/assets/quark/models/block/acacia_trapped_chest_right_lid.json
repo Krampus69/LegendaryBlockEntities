@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/template_chest_right_lid_nolatch", "textures": { "chest": "quark:quark_variant_chests/acacia/trap_right" } }

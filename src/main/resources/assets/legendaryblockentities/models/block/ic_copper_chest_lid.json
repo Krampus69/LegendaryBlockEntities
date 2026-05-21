@@ -1,0 +1,7 @@
+{
+  "parent": "legendaryblockentities:block/be_chest_lid",
+  "textures": {
+    "texture": "ironchest:model/copper_chest",
+    "particle": "ironchest:model/copper_chest"
+  }
+}

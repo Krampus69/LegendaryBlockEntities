@@ -77,6 +77,16 @@ public class ClientSetup {
                     LegendaryBlockEntities.LOG.warn("BetterNether chest setup failed", t);
                 }
             }
+
+            if (Config.OPTIMIZE_IRON_CHESTS.get()) {
+                try {
+                    if (net.minecraftforge.fml.ModList.get().isLoaded("ironchest")) {
+                        LBESetup.setupIronChests();
+                    }
+                } catch (Throwable t) {
+                    LegendaryBlockEntities.LOG.warn("Iron Chests setup failed", t);
+                }
+            }
         });
     }
 }

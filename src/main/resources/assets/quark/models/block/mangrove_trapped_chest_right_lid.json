@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/template_chest_right_lid", "textures": { "chest": "quark:quark_variant_chests/mangrove/trap_right" } }
