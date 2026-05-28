@@ -25,10 +25,12 @@ public class DynamicBakedModel implements BakedModel {
 
     private final BakedModel fullModel;
     private final BakedModel trunkModel;
+    private final String deferGroup;
 
-    public DynamicBakedModel(BakedModel fullModel, BakedModel trunkModel) {
+    public DynamicBakedModel(BakedModel fullModel, BakedModel trunkModel, String deferGroup) {
         this.fullModel = fullModel;
         this.trunkModel = trunkModel;
+        this.deferGroup = deferGroup;
     }
 
     @Override
@@ -43,6 +45,13 @@ public class DynamicBakedModel implements BakedModel {
     }
 
     private BakedModel pickModel(ModelData data) {
+        // If this group is deferred to Vanillin (e.g. bells), never bake the dynamic body —
+        // serve trunk only so the body comes solely from Vanillin's instanced renderer.
+        if ("bell".equals(deferGroup)
+                && com.krampus.legendaryblockentities.client.VanillinCompat.shouldDeferVanillaToVanillin()
+                && trunkModel != null) {
+            return trunkModel;
+        }
         Integer s = data.get(APPEARANCE_STATE);
         return (s != null && s == 1 && trunkModel != null) ? trunkModel : fullModel;
     }

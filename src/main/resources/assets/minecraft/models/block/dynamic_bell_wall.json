@@ -1,5 +1,6 @@
 {
   "loader": "legendaryblockentities:dynamic",
-  "full":  "minecraft:block/bell_wall_with_bell",
-  "trunk": "minecraft:block/bell_wall"
+  "full": "minecraft:block/bell_wall_with_bell",
+  "trunk": "minecraft:block/bell_wall",
+  "defer_group": "bell"
 }

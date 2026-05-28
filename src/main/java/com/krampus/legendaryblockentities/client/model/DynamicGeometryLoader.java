@@ -12,6 +12,7 @@ public class DynamicGeometryLoader implements IGeometryLoader<DynamicGeometry> {
     public DynamicGeometry read(JsonObject jsonObject, JsonDeserializationContext context) throws JsonParseException {
         ResourceLocation fullModel = new ResourceLocation(GsonHelper.getAsString(jsonObject, "full"));
         ResourceLocation trunkModel = new ResourceLocation(GsonHelper.getAsString(jsonObject, "trunk"));
-        return new DynamicGeometry(fullModel, trunkModel);
+        String deferGroup = GsonHelper.getAsString(jsonObject, "defer_group", "");
+        return new DynamicGeometry(fullModel, trunkModel, deferGroup);
     }
 }

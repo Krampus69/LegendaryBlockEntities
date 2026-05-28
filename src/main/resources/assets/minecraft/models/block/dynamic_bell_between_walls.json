@@ -1,5 +1,6 @@
 {
   "loader": "legendaryblockentities:dynamic",
-  "full":  "minecraft:block/bell_between_walls_with_bell",
-  "trunk": "minecraft:block/bell_between_walls"
+  "full": "minecraft:block/bell_between_walls_with_bell",
+  "trunk": "minecraft:block/bell_between_walls",
+  "defer_group": "bell"
 }

@@ -16,10 +16,12 @@ import java.util.function.Function;
 public class DynamicGeometry implements IUnbakedGeometry<DynamicGeometry> {
     private final ResourceLocation fullModel;
     private final ResourceLocation trunkModel;
+    private final String deferGroup;
 
-    public DynamicGeometry(ResourceLocation fullModel, ResourceLocation trunkModel) {
+    public DynamicGeometry(ResourceLocation fullModel, ResourceLocation trunkModel, String deferGroup) {
         this.fullModel = fullModel;
         this.trunkModel = trunkModel;
+        this.deferGroup = deferGroup;
     }
 
     @Override
@@ -29,7 +31,7 @@ public class DynamicGeometry implements IUnbakedGeometry<DynamicGeometry> {
                            ResourceLocation modelLocation) {
         BakedModel full = baker.bake(fullModel, modelState, spriteGetter);
         BakedModel trunk = baker.bake(trunkModel, modelState, spriteGetter);
-        return new DynamicBakedModel(full, trunk);
+        return new DynamicBakedModel(full, trunk, deferGroup);
     }
 
     @Override
