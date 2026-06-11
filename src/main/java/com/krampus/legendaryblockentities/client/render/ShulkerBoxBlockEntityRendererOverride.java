@@ -28,7 +28,9 @@ public class ShulkerBoxBlockEntityRendererOverride extends BlockEntityRendererOv
         if (!(blockEntity instanceof ShulkerBoxBlockEntity shulker)) return;
 
         DyeColor color = shulker.getColor();
-        BakedModel lid = (color == null) ? ModelEvents.uncoloredShulkerLidModel : ModelEvents.shulkerLidModels.get(color);
+        BakedModel lid = (color == null)
+                ? ModelEvents.resolve("minecraft", "block/shulker_box_lid")
+                : ModelEvents.resolve("minecraft", "block/" + color.getName() + "_shulker_box_lid");
         if (lid == null) return;
 
         BlockState state = blockEntity.getBlockState();

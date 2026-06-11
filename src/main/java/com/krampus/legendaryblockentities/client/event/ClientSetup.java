@@ -19,9 +19,7 @@ public class ClientSetup {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            // If Vanillin/Flywheel is actively instancing, defer the VANILLA block entities
-            // it covers (chests, trapped, ender, bell, shulker) to avoid double-rendering.
-            // Modded chests below are always handled by LBE — Vanillin doesn't cover them.
+
             boolean deferVanilla = VanillinCompat.shouldDeferVanillaToVanillin();
 
             if (Config.OPTIMIZE_CHESTS.get() && !deferVanilla) {
@@ -31,7 +29,6 @@ public class ClientSetup {
                 LBESetup.setupChests();
             }
 
-            // Beds are static NO_OP (Vanillin does not instance beds) — always LBE.
             if (Config.OPTIMIZE_BEDS.get()) {
                 LBESetup.setupBeds();
             }
@@ -53,8 +50,6 @@ public class ClientSetup {
                 for (Block s : shulkers) ItemBlockRenderTypes.setRenderLayer(s, RenderType.cutoutMipped());
                 LBESetup.setupShulkerBoxes();
             }
-
-            // ---- Modded chests: always handled by LBE (Vanillin does not cover these) ----
 
             if (Config.OPTIMIZE_QUARK_CHESTS.get()) {
                 try {

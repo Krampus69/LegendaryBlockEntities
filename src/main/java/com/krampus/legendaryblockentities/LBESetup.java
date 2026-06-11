@@ -6,8 +6,8 @@ import com.krampus.legendaryblockentities.client.render.BlockEntityRenderConditi
 import com.krampus.legendaryblockentities.client.render.BlockEntityRendererOverride;
 import com.krampus.legendaryblockentities.client.render.ChestBlockEntityRendererOverride;
 import com.krampus.legendaryblockentities.client.render.ShulkerBoxBlockEntityRendererOverride;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
@@ -15,12 +15,134 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class LBESetup {
     private LBESetup() {}
+
+    private static final String[] BETTER_END_NAMES = {
+            "lucernia_chest", "dragon_tree_chest", "end_lotus_chest", "helix_tree_chest",
+            "jellyshroom_chest", "lacugrove_chest", "mossy_glowshroom_chest",
+            "pythadendron_chest", "tenanea_chest", "umbrella_tree_chest"
+    };
+    private static final String[] BETTER_NETHER_NAMES = {
+            "anchor_tree_chest", "crimson_chest", "mushroom_fir_chest", "mushroom_fir_trimmed_chest",
+            "nether_mushroom_chest", "nether_reed_chest", "nether_sakura_chest", "rubeus_chest",
+            "stalagnate_chest", "warped_chest", "wart_chest", "willow_chest"
+    };
+    private static final String[] IRON_CHEST_NAMES = {
+            "iron_chest", "gold_chest", "diamond_chest", "copper_chest", "obsidian_chest", "dirt_chest",
+            "trapped_iron_chest", "trapped_gold_chest", "trapped_diamond_chest",
+            "trapped_copper_chest", "trapped_obsidian_chest", "trapped_dirt_chest"
+    };
+
+    /**
+     * Guards {@link #ensureDynamicBindings()} so the registry scan runs at most once
+     * (unless it fails, in which case it is allowed to retry on a later reload).
+     */
+    private static final AtomicBoolean DYNAMIC_BINDINGS_DONE = new AtomicBoolean(false);
+
+    /**
+     * Populate {@link LegendaryBlockEntityRegistry#DYNAMIC_INJECT} independently of
+     * client-setup timing.
+     *
+     * Under ModernFix the model bake can run on a worker thread BEFORE the
+     * FMLClientSetupEvent enqueued work that registers the chest overrides. If we relied
+     * on that work to populate the bindings, the body-injection in
+     * {@code ModelEvents.onModifyBakingResult} could find an empty map and render nothing.
+     * Calling this from the bake event guarantees the bindings exist whenever injection
+     * runs. The block registry is frozen by bake time, so the scan is safe off-thread.
+     */
+    public static void ensureDynamicBindings() {
+        if (!DYNAMIC_BINDINGS_DONE.compareAndSet(false, true)) return;
+        try {
+            ModList mods = ModList.get();
+
+            if (Config.OPTIMIZE_QUARK_CHESTS.get() && mods.isLoaded("quark")) {
+                bindQuarkDynamicModels();
+            }
+            if (Config.OPTIMIZE_IRON_CHESTS.get() && mods.isLoaded("ironchest")) {
+                bindIronDynamicModels();
+            }
+            if (Config.OPTIMIZE_BETTER_END_CHESTS.get() && mods.isLoaded("betterend") && mods.isLoaded("bclib")) {
+                bindBclibDynamicModels("betterend", BETTER_END_NAMES);
+            }
+            if (Config.OPTIMIZE_BETTER_NETHER_CHESTS.get() && mods.isLoaded("betternether") && mods.isLoaded("bclib")) {
+                bindBclibDynamicModels("betternether", BETTER_NETHER_NAMES);
+            }
+        } catch (Throwable t) {
+            LegendaryBlockEntities.LOG.warn("ensureDynamicBindings failed", t);
+            DYNAMIC_BINDINGS_DONE.set(false);
+        }
+    }
+
+    private static void bindQuarkDynamicModels() {
+        int boundCount = 0;
+        for (var entry : ForgeRegistries.BLOCKS.getEntries()) {
+            var key = entry.getKey().location();
+            if (!"quark".equals(key.getNamespace())) continue;
+            String path = key.getPath();
+            if (!path.endsWith("_chest") && !path.endsWith("_trapped_chest")) continue;
+            if (path.startsWith("lootr_")) continue;
+
+            Block block = entry.getValue();
+            if (!(block instanceof ChestBlock)) continue;
+
+            final String basePath = path;
+            LegendaryBlockEntityRegistry.bindDynamicModel(block, state -> {
+                String half = "center";
+                if (state.hasProperty(ChestBlock.TYPE)) {
+                    ChestType t = state.getValue(ChestBlock.TYPE);
+                    half = t == ChestType.LEFT ? "left" : t == ChestType.RIGHT ? "right" : "center";
+                }
+                return new ResourceLocation("quark", "block/" + basePath + "_" + half);
+            });
+            boundCount++;
+        }
+        LegendaryBlockEntities.LOG.info("Bound {} Quark chest blocks for dynamic body injection", boundCount);
+    }
+
+    /** Iron Chests: full/trunk geometry is authored 180-rotated, so rotate by facing + 180. */
+    private static void bindIronDynamicModels() {
+        int boundCount = 0;
+        for (String name : IRON_CHEST_NAMES) {
+            Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("ironchest", name));
+            if (block == null) continue;
+            final String modelPath = "block/" + name + "_lbe";
+            LegendaryBlockEntityRegistry.bindDynamicModel(block,
+                    state -> new ResourceLocation("ironchest", modelPath),
+                    true, 180 /* +180 cancels the pre-rotated ic_ full/trunk templates */);
+            boundCount++;
+        }
+        LegendaryBlockEntities.LOG.info("Bound {} Iron Chests blocks for dynamic body injection", boundCount);
+    }
+
+    /** BetterEnd / BetterNether: per-facing rotation, base differs by ChestType (_lbe / _left_lbe / _right_lbe). */
+    private static void bindBclibDynamicModels(String namespace, String[] names) {
+        int boundCount = 0;
+        for (String name : names) {
+            Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(namespace, name));
+            if (!(block instanceof ChestBlock)) continue;
+
+            final String baseName = name;
+            LegendaryBlockEntityRegistry.bindDynamicModel(block, state -> {
+                String suffix = "";
+                if (state.hasProperty(ChestBlock.TYPE)) {
+                    ChestType t = state.getValue(ChestBlock.TYPE);
+                    if (t == ChestType.LEFT) suffix = "_left";
+                    else if (t == ChestType.RIGHT) suffix = "_right";
+                }
+                return new ResourceLocation(namespace, "block/" + baseName + suffix + "_lbe");
+            });
+            boundCount++;
+        }
+        LegendaryBlockEntities.LOG.info("Bound {} {} chest blocks for dynamic body injection", boundCount, namespace);
+    }
 
     public static void setupChests() {
         Function<BlockEntity, Integer> chestTypeSelector = be -> {
@@ -34,10 +156,15 @@ public final class LBESetup {
         Function<BlockEntity, Integer> singleModel = be -> 0;
 
         Supplier<BakedModel[]> chestSupplier = () -> new BakedModel[]{
-                or(ModelEvents.chestLidModel), or(ModelEvents.chestLeftLidModel), or(ModelEvents.chestRightLidModel)};
+                ModelEvents.resolve("minecraft", "block/chest_normal_center_lid"),
+                ModelEvents.resolve("minecraft", "block/chest_normal_left_lid"),
+                ModelEvents.resolve("minecraft", "block/chest_normal_right_lid")};
         Supplier<BakedModel[]> trappedSupplier = () -> new BakedModel[]{
-                or(ModelEvents.trappedChestLidModel), or(ModelEvents.trappedChestLeftLidModel), or(ModelEvents.trappedChestRightLidModel)};
-        Supplier<BakedModel[]> enderSupplier = () -> new BakedModel[]{or(ModelEvents.enderChestLidModel)};
+                ModelEvents.resolve("minecraft", "block/trapped_chest_normal_center_lid"),
+                ModelEvents.resolve("minecraft", "block/trapped_chest_normal_left_lid"),
+                ModelEvents.resolve("minecraft", "block/trapped_chest_normal_right_lid")};
+        Supplier<BakedModel[]> enderSupplier = () -> new BakedModel[]{
+                ModelEvents.resolve("minecraft", "block/ender_chest_normal_center_lid")};
 
         LegendaryBlockEntityRegistry.register(Blocks.CHEST, BlockEntityType.CHEST,
                 BlockEntityRenderCondition.CHEST,
@@ -79,31 +206,14 @@ public final class LBESetup {
     }
 
     public static void setupBetterEndChests() {
-        setupBclibChests("betterend", new String[]{
-                "lucernia_chest", "dragon_tree_chest", "end_lotus_chest", "helix_tree_chest",
-                "jellyshroom_chest", "lacugrove_chest", "mossy_glowshroom_chest",
-                "pythadendron_chest", "tenanea_chest", "umbrella_tree_chest"
-        });
+        setupBclibChests("betterend", BETTER_END_NAMES);
     }
 
     public static void setupBetterNetherChests() {
-        setupBclibChests("betternether", new String[]{
-                "anchor_tree_chest", "crimson_chest", "mushroom_fir_chest", "mushroom_fir_trimmed_chest",
-                "nether_mushroom_chest", "nether_reed_chest", "nether_sakura_chest", "rubeus_chest",
-                "stalagnate_chest", "warped_chest", "wart_chest", "willow_chest"
-        });
+        setupBclibChests("betternether", BETTER_NETHER_NAMES);
     }
 
     public static void setupIronChests() {
-        var forgeReg = net.minecraftforge.registries.ForgeRegistries.BLOCKS;
-
-        // block id -> BE type field name in IronChestsBlockEntityTypes
-        String[] names = {
-                "iron_chest", "gold_chest", "diamond_chest", "copper_chest", "obsidian_chest", "dirt_chest",
-                "trapped_iron_chest", "trapped_gold_chest", "trapped_diamond_chest",
-                "trapped_copper_chest", "trapped_obsidian_chest", "trapped_dirt_chest"
-        };
-
         Class<?> typesCls;
         try {
             typesCls = Class.forName("com.progwml6.ironchest.common.block.entity.IronChestsBlockEntityTypes");
@@ -115,15 +225,14 @@ public final class LBESetup {
         Function<BlockEntity, Integer> singleSelector = be -> 0;
         int registered = 0;
 
-        for (String name : names) {
-            Block block = forgeReg.getValue(new net.minecraft.resources.ResourceLocation("ironchest", name));
+        for (String name : IRON_CHEST_NAMES) {
+            Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("ironchest", name));
             if (block == null) continue;
 
-            // RegistryObject<BlockEntityType<?>> field, name = uppercased block id
             BlockEntityType<?> beType;
             try {
                 Object regObj = typesCls.getField(name.toUpperCase(java.util.Locale.ROOT)).get(null);
-                // RegistryObject has a get() method
+
                 beType = (BlockEntityType<?>) regObj.getClass().getMethod("get").invoke(regObj);
             } catch (ReflectiveOperationException e) {
                 LegendaryBlockEntities.LOG.warn("Could not resolve Iron Chests BE type for {}: {}", name, e.getMessage());
@@ -148,18 +257,13 @@ public final class LBESetup {
     }
 
     private static BakedModel lookupIron(String name) {
-        BakedModel m = ModelEvents.ironChestLids.get(name);
-        return m != null ? m : Minecraft.getInstance().getModelManager().getBlockModelShaper()
-                .getBlockModel(Blocks.STONE.defaultBlockState());
+        return ModelEvents.resolve("legendaryblockentities", "block/ic_" + name + "_lid");
     }
 
     private static BakedModel lookupBetterEnd(String name) {
-        BakedModel m = ModelEvents.betterEndChestLids.get(name);
-        return m != null ? m : Minecraft.getInstance().getModelManager().getBlockModelShaper()
-                .getBlockModel(Blocks.STONE.defaultBlockState());
+        return ModelEvents.resolve("legendaryblockentities", "block/be_" + name + "_lid");
     }
     private static void setupBclibChests(String namespace, String[] names) {
-        var forgeReg = net.minecraftforge.registries.ForgeRegistries.BLOCKS;
         BlockEntityType<?> beType;
         try {
             Class<?> cls = Class.forName("org.betterx.bclib.registry.BaseBlockEntities");
@@ -181,7 +285,7 @@ public final class LBESetup {
 
         int registered = 0;
         for (String name : names) {
-            Block block = forgeReg.getValue(new net.minecraft.resources.ResourceLocation(namespace, name));
+            Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(namespace, name));
             if (!(block instanceof ChestBlock)) continue;
 
             final String key = name;
@@ -211,10 +315,9 @@ public final class LBESetup {
             return 0;
         };
 
-        var forgeReg = net.minecraftforge.registries.ForgeRegistries.BLOCKS;
         int registered = 0;
 
-        for (var entry : forgeReg.getEntries()) {
+        for (var entry : ForgeRegistries.BLOCKS.getEntries()) {
             var key = entry.getKey().location();
             if (!"quark".equals(key.getNamespace())) continue;
             String path = key.getPath();
@@ -224,11 +327,10 @@ public final class LBESetup {
             Block block = entry.getValue();
             if (!(block instanceof ChestBlock)) continue;
 
-            // Look up the BE type via the actual block's expected type — Quark uses a shared one per category.
             boolean trapped = path.endsWith("_trapped_chest");
             BlockEntityType<?> beType;
             try {
-                // Quark exposes the BE types statically. We try reflection to avoid a hard dep.
+
                 Class<?> moduleCls = Class.forName("org.violetmoon.quark.content.building.module.VariantChestsModule");
                 beType = (BlockEntityType<?>) moduleCls.getField(trapped ? "trappedChestTEType" : "chestTEType").get(null);
             } catch (ReflectiveOperationException e) {
@@ -236,7 +338,6 @@ public final class LBESetup {
                 continue;
             }
             if (beType == null) continue;
-
 
             Supplier<BakedModel[]> supplier = () -> new BakedModel[]{
                     lookupQuark(path + "_center"),
@@ -255,9 +356,7 @@ public final class LBESetup {
     }
 
     private static BakedModel lookupQuark(String modelName) {
-        BakedModel m = ModelEvents.quarkChestLids.get(modelName);
-        return m != null ? m : Minecraft.getInstance().getModelManager().getBlockModelShaper()
-                .getBlockModel(Blocks.STONE.defaultBlockState());
+        return ModelEvents.resolve("quark", "block/" + modelName + "_lid");
     }
 
     public static void setupBeds() {
@@ -274,10 +373,5 @@ public final class LBESetup {
                     BlockEntityRendererOverride.NO_OP
             );
         }
-    }
-
-    private static BakedModel or(BakedModel m) {
-        return m != null ? m : Minecraft.getInstance().getModelManager().getBlockModelShaper()
-                .getBlockModel(Blocks.STONE.defaultBlockState());
     }
 }

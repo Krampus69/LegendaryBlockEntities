@@ -24,7 +24,7 @@ public class BellBlockEntityRendererOverride extends BlockEntityRendererOverride
     public void render(BlockEntityRenderer<BlockEntity> renderer, BlockEntity blockEntity,
                        float partialTick, PoseStack poseStack, MultiBufferSource buffer,
                        int packedLight, int packedOverlay) {
-        BakedModel bellModel = ModelEvents.bellBodyModel;
+        BakedModel bellModel = ModelEvents.resolve("minecraft", "block/bell_body");
         if (bellModel == null) return;
         if (!(blockEntity instanceof BellBlockEntity bell)) return;
 

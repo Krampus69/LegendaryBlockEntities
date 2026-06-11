@@ -1,109 +1,139 @@
 package com.krampus.legendaryblockentities.client.event;
 
+import com.krampus.legendaryblockentities.LBESetup;
 import com.krampus.legendaryblockentities.LegendaryBlockEntities;
 import com.krampus.legendaryblockentities.LegendaryBlockEntityRegistry;
 import com.krampus.legendaryblockentities.client.model.DynamicGeometryLoader;
+import com.krampus.legendaryblockentities.client.model.RotatedBakedModel;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelManager;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Mod.EventBusSubscriber(modid = LegendaryBlockEntities.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ModelEvents {
 
-    public static final Map<String, BakedModel> quarkChestLids = new HashMap<>();
-    public static final Map<String, BakedModel> betterEndChestLids = new HashMap<>();
-    public static volatile BakedModel chestLidModel = null;
-    public static volatile BakedModel chestLeftLidModel = null;
-    public static volatile BakedModel chestRightLidModel = null;
-    public static volatile BakedModel trappedChestLidModel = null;
-    public static volatile BakedModel trappedChestLeftLidModel = null;
-    public static volatile BakedModel trappedChestRightLidModel = null;
-    public static volatile BakedModel enderChestLidModel = null;
-    public static volatile BakedModel bellBodyModel = null;
-    public static volatile BakedModel uncoloredShulkerLidModel = null;
-    public static final Map<DyeColor, BakedModel> shulkerLidModels = new HashMap<>();
-    public static final Map<String, BakedModel> ironChestLids = new HashMap<>();
+    /**
+     * Lazily-resolved baked-model cache, keyed by model location.
+     *
+     * We deliberately do NOT capture model references in ModifyBakingResult any more.
+     * Instead we resolve through ModelManager#getModel on demand (at render time) and
+     * cache the result here. This keeps us compatible with ModernFix's "dynamic
+     * resources" optimization, which bakes models lazily/evictably: under it the
+     * ModifyBakingResult map is empty, but getModel() bakes the requested model on the
+     * spot. In a vanilla (non-dynamic) pipeline getModel() simply returns the already
+     * baked model, so the same code path works in both cases.
+     */
+    private static final Map<ResourceLocation, BakedModel> CACHE = new ConcurrentHashMap<>();
+
+    /**
+     * Resolve a baked model by location.
+     *
+     * @return the baked model, or {@code null} if it is absent (i.e. the model manager
+     *         returned the missing model). Returning null lets callers skip rendering
+     *         instead of drawing stone or the missing-texture cube. Misses are not
+     *         cached, so a model that bakes slightly later will resolve on a later frame.
+     */
+    public static BakedModel resolve(ResourceLocation location) {
+        BakedModel cached = CACHE.get(location);
+        if (cached != null) return cached;
+
+        ModelManager mm = Minecraft.getInstance().getModelManager();
+        BakedModel model = mm.getModel(location);
+        if (model == null || model == mm.getMissingModel()) {
+            return null;
+        }
+        CACHE.put(location, model);
+        return model;
+    }
+
+    public static BakedModel resolve(String namespace, String path) {
+        return resolve(new ResourceLocation(namespace, path));
+    }
 
     @SubscribeEvent
     public static void onRegisterGeometryLoaders(ModelEvent.RegisterGeometryLoaders event) {
         event.register("dynamic", new DynamicGeometryLoader());
     }
 
+    /**
+     * Inject the LBE dynamic body model under each blockstate variant for blocks whose
+     * owning mod registers its blockstate models in code (so our JSON override loses).
+     *
+     * Runs at ModifyBakingResult so the injected models are present before chunks build.
+     * Under ModernFix the result map is the dynamic provider; put() writes a permanent
+     * override that wins over both lazy baking and the (losing) blockstate JSON. The base
+     * dynamic-model file itself is uncontested, so fetching it via get() returns our
+     * DynamicBakedModel; we then re-apply the per-facing rotation (for families whose
+     * blockstate rotates the body) since we are bypassing the blockstate's "y" value.
+     *
+     * We populate the bindings here (ensureDynamicBindings) rather than relying on client
+     * setup, because under ModernFix the model bake can run on a worker thread BEFORE the
+     * FMLClientSetupEvent enqueued work that would otherwise register them.
+     */
     @SubscribeEvent
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
-        // Reset state
-        chestLidModel = chestLeftLidModel = chestRightLidModel = null;
-        trappedChestLidModel = trappedChestLeftLidModel = trappedChestRightLidModel = null;
-        enderChestLidModel = bellBodyModel = uncoloredShulkerLidModel = null;
-        shulkerLidModels.clear();
-        quarkChestLids.clear();
-        betterEndChestLids.clear();
-        ironChestLids.clear();
+        LBESetup.ensureDynamicBindings();
 
-        // Single pass over all baked models
-        for (var entry : event.getModels().entrySet()) {
-            String key = entry.getKey().toString();
-            BakedModel model = entry.getValue();
+        Map<ResourceLocation, BakedModel> models = event.getModels();
+        int bound = LegendaryBlockEntityRegistry.DYNAMIC_INJECT.size();
+        LegendaryBlockEntities.LOG.info("ModifyBakingResult fired; DYNAMIC_INJECT has {} block(s)", bound);
 
-            if      (key.contains("trapped_chest_normal_left_lid"))   trappedChestLeftLidModel = model;
-            else if (key.contains("trapped_chest_normal_right_lid"))  trappedChestRightLidModel = model;
-            else if (key.contains("trapped_chest_normal_center_lid")) trappedChestLidModel = model;
-            else if (key.contains("ender_chest_normal_center_lid"))   enderChestLidModel = model;
-            else if (key.contains("chest_normal_left_lid"))           chestLeftLidModel = model;
-            else if (key.contains("chest_normal_right_lid"))          chestRightLidModel = model;
-            else if (key.contains("chest_normal_center_lid"))         chestLidModel = model;
-            else if (key.equals("minecraft:block/bell_body"))         bellBodyModel = model;
-            else if (key.startsWith("legendaryblockentities:block/ic_") && key.endsWith("_lid")) {
-                String name = key.substring("legendaryblockentities:block/ic_".length(), key.length() - "_lid".length());
-                ironChestLids.put(name, model);
-            }
-            else if (key.startsWith("minecraft:block/") && key.endsWith("shulker_box_lid")) {
-                String suffix = key.substring("minecraft:block/".length());
-                if (suffix.equals("shulker_box_lid")) {
-                    uncoloredShulkerLidModel = model;
-                } else {
-                    String name = suffix.substring(0, suffix.length() - "_shulker_box_lid".length());
-                    DyeColor color = DyeColor.byName(name, null);
-                    if (color != null) shulkerLidModels.put(color, model);
+        int injected = 0;
+        try {
+            for (Map.Entry<Block, LegendaryBlockEntityRegistry.DynamicBinding> e
+                    : LegendaryBlockEntityRegistry.DYNAMIC_INJECT.entrySet()) {
+                Block block = e.getKey();
+                LegendaryBlockEntityRegistry.DynamicBinding binding = e.getValue();
+                ResourceLocation blockId = ForgeRegistries.BLOCKS.getKey(block);
+                if (blockId == null) continue;
+
+                for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+                    ResourceLocation base = binding.baseModel().apply(state);
+                    if (base == null) continue;
+
+                    BakedModel dynamic = models.get(base);
+                    if (dynamic == null) continue;
+
+                    int y = (((binding.rotateByFacing() ? yAngle(state) : 0) + binding.yOffset()) % 360 + 360) % 360;
+                    ModelResourceLocation mrl = BlockModelShaper.stateToModelLocation(blockId, state);
+                    models.put(mrl, y == 0 ? dynamic : new RotatedBakedModel(dynamic, y));
+                    injected++;
                 }
             }
-            else if (key.startsWith("quark:block/") && key.endsWith("_lid")) {
-                String name = key.substring("quark:block/".length(), key.length() - "_lid".length());
-                quarkChestLids.put(name, model);
-            }
-            else if (key.startsWith("legendaryblockentities:block/be_") && key.endsWith("_lid")) {
-                String name = key.substring("legendaryblockentities:block/be_".length(), key.length() - "_lid".length());
-                betterEndChestLids.put(name, model);
-            }
+        } catch (Throwable t) {
+            LegendaryBlockEntities.LOG.error("Dynamic body injection failed", t);
         }
 
-        // Consolidated missing-model report
-        List<String> missing = new ArrayList<>();
-        if (chestLidModel == null)             missing.add("chest_normal_center_lid");
-        if (chestLeftLidModel == null)         missing.add("chest_normal_left_lid");
-        if (chestRightLidModel == null)        missing.add("chest_normal_right_lid");
-        if (trappedChestLidModel == null)      missing.add("trapped_chest_normal_center_lid");
-        if (trappedChestLeftLidModel == null)  missing.add("trapped_chest_normal_left_lid");
-        if (trappedChestRightLidModel == null) missing.add("trapped_chest_normal_right_lid");
-        if (enderChestLidModel == null)        missing.add("ender_chest_normal_center_lid");
-        if (bellBodyModel == null)             missing.add("bell_body");
-        if (uncoloredShulkerLidModel == null)  missing.add("shulker_box_lid");
-        for (DyeColor c : DyeColor.values()) {
-            if (!shulkerLidModels.containsKey(c)) missing.add(c.getName() + "_shulker_box_lid");
-        }
-        if (!missing.isEmpty()) {
-            LegendaryBlockEntities.LOG.error("Missing baked models: {}", missing);
-        }
+        LegendaryBlockEntities.LOG.info("Injected {} dynamic chest-body model states", injected);
+    }
 
+    private static int yAngle(BlockState state) {
+        if (!state.hasProperty(ChestBlock.FACING)) return 0;
+        return switch (state.getValue(ChestBlock.FACING)) {
+            case EAST -> 90;
+            case SOUTH -> 180;
+            case WEST -> 270;
+            default -> 0; // NORTH
+        };
+    }
+
+    @SubscribeEvent
+    public static void onBakingCompleted(ModelEvent.BakingCompleted event) {
+        CACHE.clear();
         for (var entry : LegendaryBlockEntityRegistry.ENTITIES.values()) {
             entry.getSecond().onModelsReload();
         }
@@ -153,6 +183,7 @@ public class ModelEvents {
                 "trapped_copper_chest", "trapped_obsidian_chest", "trapped_dirt_chest"
         };
         for (String name : ironChests) {
+            event.register(new ResourceLocation("ironchest", "block/" + name + "_lbe"));
             event.register(new ResourceLocation("legendaryblockentities", "block/ic_" + name + "_lid"));
             event.register(new ResourceLocation("legendaryblockentities", "block/ic_" + name + "_full"));
             event.register(new ResourceLocation("legendaryblockentities", "block/ic_" + name + "_trunk"));

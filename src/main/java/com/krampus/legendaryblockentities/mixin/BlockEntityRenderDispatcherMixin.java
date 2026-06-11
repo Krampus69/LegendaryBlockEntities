@@ -31,6 +31,7 @@ public class BlockEntityRenderDispatcherMixin {
             CallbackInfo ci) {
 
         Block block = blockEntity.getBlockState().getBlock();
+
         if (!LegendaryBlockEntityRegistry.BLOCKS.contains(block)) return;
 
         Pair<BlockEntityRenderCondition, BlockEntityRendererOverride> entry =

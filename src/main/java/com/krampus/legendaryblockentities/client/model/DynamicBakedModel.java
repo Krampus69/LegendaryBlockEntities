@@ -18,7 +18,9 @@ import net.minecraftforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DynamicBakedModel implements BakedModel {
     public static final ModelProperty<Integer> APPEARANCE_STATE = new ModelProperty<>();
@@ -27,10 +29,19 @@ public class DynamicBakedModel implements BakedModel {
     private final BakedModel trunkModel;
     private final String deferGroup;
 
+    private final Map<List<BakedQuad>, List<BakedQuad>> fixCache = new IdentityHashMap<>();
+
     public DynamicBakedModel(BakedModel fullModel, BakedModel trunkModel, String deferGroup) {
         this.fullModel = fullModel;
         this.trunkModel = trunkModel;
         this.deferGroup = deferGroup;
+    }
+
+    private List<BakedQuad> corrected(List<BakedQuad> src) {
+        if (src.isEmpty()) return src;
+        synchronized (fixCache) {
+            return fixCache.computeIfAbsent(src, QuadNormalFixer::fix);
+        }
     }
 
     @Override
@@ -45,8 +56,6 @@ public class DynamicBakedModel implements BakedModel {
     }
 
     private BakedModel pickModel(ModelData data) {
-        // If this group is deferred to Vanillin (e.g. bells), never bake the dynamic body —
-        // serve trunk only so the body comes solely from Vanillin's instanced renderer.
         if ("bell".equals(deferGroup)
                 && com.krampus.legendaryblockentities.client.VanillinCompat.shouldDeferVanillaToVanillin()
                 && trunkModel != null) {
@@ -59,14 +68,14 @@ public class DynamicBakedModel implements BakedModel {
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side,
                                              @NotNull RandomSource rand) {
-        return fullModel.getQuads(state, side, rand);
+        return corrected(fullModel.getQuads(state, side, rand));
     }
 
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side,
                                              @NotNull RandomSource rand, @NotNull ModelData extraData,
                                              @Nullable RenderType renderType) {
-        return pickModel(extraData).getQuads(state, side, rand, extraData, renderType);
+        return corrected(pickModel(extraData).getQuads(state, side, rand, extraData, renderType));
     }
 
     @Override public boolean useAmbientOcclusion() { return fullModel.useAmbientOcclusion(); }
