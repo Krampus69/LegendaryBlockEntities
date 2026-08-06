@@ -20,6 +20,7 @@ import net.minecraftforge.client.model.data.ModelData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.joml.Vector4f;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -29,15 +30,56 @@ import java.util.Map;
 public class RotatedBakedModel implements BakedModel {
     private final BakedModel wrapped;
     private final IQuadTransformer transformer;
+    private final Direction[] sourceSide;
     private final Map<List<BakedQuad>, List<BakedQuad>> cache = new IdentityHashMap<>();
 
     public RotatedBakedModel(BakedModel wrapped, int yAngle) {
-        this.wrapped = wrapped;
-        this.transformer = yAngle == 0 ? null : QuadTransformers.applying(centered(yAngle));
+        this(wrapped, 0, yAngle);
     }
 
-    private static Transformation centered(int yAngle) {
-        Matrix4f rot = new Matrix4f(BlockModelRotation.by(0, yAngle).getRotation().getMatrix());
+    public RotatedBakedModel(BakedModel wrapped, int xAngle, int yAngle) {
+        this.wrapped = wrapped;
+        if (xAngle == 0 && yAngle == 0) {
+            this.transformer = null;
+            this.sourceSide = null;
+        } else {
+            this.transformer = QuadTransformers.applying(centered(xAngle, yAngle));
+            this.sourceSide = inverseFaceMap(BlockModelRotation.by(xAngle, yAngle).getRotation().getMatrix());
+        }
+    }
+
+    /**
+     * The wrapped model buckets its quads by un-rotated face, but callers ask for the
+     * post-rotation face -- and only ask at all when that face is unoccluded. Serving
+     * bucket s from the wrapped bucket of the same name means the wrong quads disappear
+     * when a neighbour occludes s. Bucket s must instead come from the wrapped bucket d
+     * for which rotate(d) == s.
+     */
+    private static Direction[] inverseFaceMap(Matrix4f rotation) {
+        Matrix4f rot = new Matrix4f(rotation);
+        Direction[] inverse = new Direction[6];
+        Vector4f v = new Vector4f();
+        for (Direction d : Direction.values()) {
+            v.set(d.getStepX(), d.getStepY(), d.getStepZ(), 0f);
+            rot.transform(v);
+            inverse[nearestAxis(v.x(), v.y(), v.z()).ordinal()] = d;
+        }
+        return inverse;
+    }
+
+    private static Direction nearestAxis(float x, float y, float z) {
+        float ax = Math.abs(x), ay = Math.abs(y), az = Math.abs(z);
+        if (ax >= ay && ax >= az) return x >= 0 ? Direction.EAST : Direction.WEST;
+        if (ay >= az) return y >= 0 ? Direction.UP : Direction.DOWN;
+        return z >= 0 ? Direction.SOUTH : Direction.NORTH;
+    }
+
+    private Direction sourceSide(@Nullable Direction side) {
+        return (side == null || sourceSide == null) ? side : sourceSide[side.ordinal()];
+    }
+
+    private static Transformation centered(int xAngle, int yAngle) {
+        Matrix4f rot = new Matrix4f(BlockModelRotation.by(xAngle, yAngle).getRotation().getMatrix());
         Matrix4f m = new Matrix4f()
                 .translate(0.5f, 0.5f, 0.5f)
                 .mul(rot)
@@ -84,14 +126,14 @@ public class RotatedBakedModel implements BakedModel {
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side,
                                              @NotNull RandomSource rand) {
-        return rotate(wrapped.getQuads(state, side, rand));
+        return rotate(wrapped.getQuads(state, sourceSide(side), rand));
     }
 
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side,
                                              @NotNull RandomSource rand, @NotNull ModelData data,
                                              @Nullable RenderType renderType) {
-        return rotate(wrapped.getQuads(state, side, rand, data, renderType));
+        return rotate(wrapped.getQuads(state, sourceSide(side), rand, data, renderType));
     }
 
     @Override

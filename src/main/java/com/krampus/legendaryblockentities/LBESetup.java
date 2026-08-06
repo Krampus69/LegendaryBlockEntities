@@ -6,14 +6,21 @@ import com.krampus.legendaryblockentities.client.render.BlockEntityRenderConditi
 import com.krampus.legendaryblockentities.client.render.BlockEntityRendererOverride;
 import com.krampus.legendaryblockentities.client.render.ChestBlockEntityRendererOverride;
 import com.krampus.legendaryblockentities.client.render.ShulkerBoxBlockEntityRendererOverride;
+import com.krampus.legendaryblockentities.LegendaryBlockEntityRegistry.Rot;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.BellBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.level.block.state.properties.BellAttachType;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -34,6 +41,10 @@ public final class LBESetup {
             "anchor_tree_chest", "crimson_chest", "mushroom_fir_chest", "mushroom_fir_trimmed_chest",
             "nether_mushroom_chest", "nether_reed_chest", "nether_sakura_chest", "rubeus_chest",
             "stalagnate_chest", "warped_chest", "wart_chest", "willow_chest"
+    };
+    private static final String[] DYE_COLORS = {
+            "black", "blue", "brown", "cyan", "gray", "green", "light_blue", "light_gray",
+            "lime", "magenta", "orange", "pink", "purple", "red", "white", "yellow"
     };
     private static final String[] IRON_CHEST_NAMES = {
             "iron_chest", "gold_chest", "diamond_chest", "copper_chest", "obsidian_chest", "dirt_chest",
@@ -63,6 +74,8 @@ public final class LBESetup {
         try {
             ModList mods = ModList.get();
 
+            bindVanillaDynamicModels();
+
             if (Config.OPTIMIZE_QUARK_CHESTS.get() && mods.isLoaded("quark")) {
                 bindQuarkDynamicModels();
             }
@@ -79,6 +92,99 @@ public final class LBESetup {
             LegendaryBlockEntities.LOG.warn("ensureDynamicBindings failed", t);
             DYNAMIC_BINDINGS_DONE.set(false);
         }
+    }
+
+
+    private static void bindVanillaDynamicModels() {
+        if (Config.OPTIMIZE_CHESTS.get()) {
+            bindVanillaChest(Blocks.CHEST, "chest_normal");
+            bindVanillaChest(Blocks.TRAPPED_CHEST, "trapped_chest_normal");
+            LegendaryBlockEntityRegistry.bindDynamicModel(Blocks.ENDER_CHEST,
+                    state -> new ResourceLocation("minecraft", "block/ender_chest_normal_center"));
+        }
+
+        if (Config.OPTIMIZE_BEDS.get()) {
+            for (String color : DYE_COLORS) {
+                Block bed = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("minecraft", color + "_bed"));
+                if (bed == null) continue;
+                final String c = color;
+                LegendaryBlockEntityRegistry.bindDynamicModel(bed, state -> new ResourceLocation("minecraft",
+                        "block/" + c + "_bed_"
+                                + (state.getValue(BedBlock.PART) == BedPart.HEAD ? "head" : "foot")));
+            }
+        }
+
+        if (Config.OPTIMIZE_BELLS.get()) {
+            LegendaryBlockEntityRegistry.bindDynamicModel(Blocks.BELL,
+                    state -> new ResourceLocation("minecraft", "block/dynamic_bell_" + bellVariant(state)),
+                    state -> new Rot(0, bellYAngle(state)));
+        }
+
+        if (Config.OPTIMIZE_SHULKER_BOXES.get()) {
+            bindShulkerBox(Blocks.SHULKER_BOX, "");
+            for (String color : DYE_COLORS) {
+                Block box = ForgeRegistries.BLOCKS.getValue(
+                        new ResourceLocation("minecraft", color + "_shulker_box"));
+                if (box != null) bindShulkerBox(box, color + "_");
+            }
+        }
+
+        LegendaryBlockEntities.LOG.info("Bound vanilla block families for dynamic body injection");
+    }
+
+    private static void bindVanillaChest(Block block, String prefix) {
+        LegendaryBlockEntityRegistry.bindDynamicModel(block, state -> {
+            String half = "center";
+            if (state.hasProperty(ChestBlock.TYPE)) {
+                ChestType t = state.getValue(ChestBlock.TYPE);
+                half = t == ChestType.LEFT ? "left" : t == ChestType.RIGHT ? "right" : "center";
+            }
+            return new ResourceLocation("minecraft", "block/" + prefix + "_" + half);
+        });
+    }
+
+    /** Shulker boxes rotate on X as well as Y; mapping transcribed from our shulker_box.json. */
+    private static void bindShulkerBox(Block block, String colorPrefix) {
+        final ResourceLocation base =
+                new ResourceLocation("minecraft", "block/dynamic_" + colorPrefix + "shulker_box");
+        LegendaryBlockEntityRegistry.bindDynamicModel(block, state -> base, state ->
+                switch (state.getValue(ShulkerBoxBlock.FACING)) {
+                    case UP -> Rot.NONE;
+                    case DOWN -> new Rot(180, 0);
+                    case NORTH -> new Rot(90, 0);
+                    case EAST -> new Rot(90, 90);
+                    case SOUTH -> new Rot(90, 180);
+                    case WEST -> new Rot(90, 270);
+                });
+    }
+
+    private static String bellVariant(BlockState state) {
+        return switch (state.getValue(BellBlock.ATTACHMENT)) {
+            case FLOOR -> "floor";
+            case CEILING -> "ceiling";
+            case SINGLE_WALL -> "wall";
+            case DOUBLE_WALL -> "between_walls";
+        };
+    }
+
+    /** Wall attachments use a different facing offset than floor/ceiling; see bell.json. */
+    private static int bellYAngle(BlockState state) {
+        BellAttachType attachment = state.getValue(BellBlock.ATTACHMENT);
+        Direction facing = state.getValue(BellBlock.FACING);
+        if (attachment == BellAttachType.SINGLE_WALL || attachment == BellAttachType.DOUBLE_WALL) {
+            return switch (facing) {
+                case NORTH -> 270;
+                case SOUTH -> 90;
+                case WEST -> 180;
+                default -> 0; // EAST
+            };
+        }
+        return switch (facing) {
+            case SOUTH -> 180;
+            case EAST -> 90;
+            case WEST -> 270;
+            default -> 0; // NORTH
+        };
     }
 
     private static void bindQuarkDynamicModels() {

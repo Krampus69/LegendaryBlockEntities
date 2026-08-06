@@ -12,7 +12,6 @@ import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelEvent;
@@ -26,27 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod.EventBusSubscriber(modid = LegendaryBlockEntities.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ModelEvents {
 
-    /**
-     * Lazily-resolved baked-model cache, keyed by model location.
-     *
-     * We deliberately do NOT capture model references in ModifyBakingResult any more.
-     * Instead we resolve through ModelManager#getModel on demand (at render time) and
-     * cache the result here. This keeps us compatible with ModernFix's "dynamic
-     * resources" optimization, which bakes models lazily/evictably: under it the
-     * ModifyBakingResult map is empty, but getModel() bakes the requested model on the
-     * spot. In a vanilla (non-dynamic) pipeline getModel() simply returns the already
-     * baked model, so the same code path works in both cases.
-     */
     private static final Map<ResourceLocation, BakedModel> CACHE = new ConcurrentHashMap<>();
 
-    /**
-     * Resolve a baked model by location.
-     *
-     * @return the baked model, or {@code null} if it is absent (i.e. the model manager
-     *         returned the missing model). Returning null lets callers skip rendering
-     *         instead of drawing stone or the missing-texture cube. Misses are not
-     *         cached, so a model that bakes slightly later will resolve on a later frame.
-     */
     public static BakedModel resolve(ResourceLocation location) {
         BakedModel cached = CACHE.get(location);
         if (cached != null) return cached;
@@ -69,21 +49,6 @@ public class ModelEvents {
         event.register("dynamic", new DynamicGeometryLoader());
     }
 
-    /**
-     * Inject the LBE dynamic body model under each blockstate variant for blocks whose
-     * owning mod registers its blockstate models in code (so our JSON override loses).
-     *
-     * Runs at ModifyBakingResult so the injected models are present before chunks build.
-     * Under ModernFix the result map is the dynamic provider; put() writes a permanent
-     * override that wins over both lazy baking and the (losing) blockstate JSON. The base
-     * dynamic-model file itself is uncontested, so fetching it via get() returns our
-     * DynamicBakedModel; we then re-apply the per-facing rotation (for families whose
-     * blockstate rotates the body) since we are bypassing the blockstate's "y" value.
-     *
-     * We populate the bindings here (ensureDynamicBindings) rather than relying on client
-     * setup, because under ModernFix the model bake can run on a worker thread BEFORE the
-     * FMLClientSetupEvent enqueued work that would otherwise register them.
-     */
     @SubscribeEvent
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
         LBESetup.ensureDynamicBindings();
@@ -108,9 +73,10 @@ public class ModelEvents {
                     BakedModel dynamic = models.get(base);
                     if (dynamic == null) continue;
 
-                    int y = (((binding.rotateByFacing() ? yAngle(state) : 0) + binding.yOffset()) % 360 + 360) % 360;
+                    LegendaryBlockEntityRegistry.Rot rot = binding.rotation().apply(state);
                     ModelResourceLocation mrl = BlockModelShaper.stateToModelLocation(blockId, state);
-                    models.put(mrl, y == 0 ? dynamic : new RotatedBakedModel(dynamic, y));
+                    models.put(mrl, (rot.x() == 0 && rot.y() == 0)
+                            ? dynamic : new RotatedBakedModel(dynamic, rot.x(), rot.y()));
                     injected++;
                 }
             }
@@ -119,16 +85,6 @@ public class ModelEvents {
         }
 
         LegendaryBlockEntities.LOG.info("Injected {} dynamic chest-body model states", injected);
-    }
-
-    private static int yAngle(BlockState state) {
-        if (!state.hasProperty(ChestBlock.FACING)) return 0;
-        return switch (state.getValue(ChestBlock.FACING)) {
-            case EAST -> 90;
-            case SOUTH -> 180;
-            case WEST -> 270;
-            default -> 0; // NORTH
-        };
     }
 
     @SubscribeEvent
@@ -145,6 +101,9 @@ public class ModelEvents {
                 "trapped_chest_normal_center", "trapped_chest_normal_left", "trapped_chest_normal_right",
                 "ender_chest_normal_center"};
         for (String name : chestVariants) {
+            // The bare dynamic model is now referenced by code injection rather than only by
+            // our blockstate JSON, so it must be baked even when that JSON loses priority.
+            event.register(new ResourceLocation("minecraft", "block/" + name));
             event.register(new ResourceLocation("minecraft", "block/" + name + "_lid"));
             event.register(new ResourceLocation("minecraft", "block/" + name + "_trunk"));
             event.register(new ResourceLocation("minecraft", "block/" + name + "_full"));
