@@ -1,8 +1,4 @@
 legendaryblockentities-1.20.1 Changelog
-0.9.0
+0.10.0
 ====
-Vanilla chests, beds, bells and shulker boxes no longer turn invisible when another mod
-shuffles resource pack priority (seen with Tectonic)
-Their models are now bound in code instead of relying on LBE blockstate files winning
-Rotated models no longer cull the wrong face against neighbouring blocks, most visible
-on attached shulker boxes
+fixed typos in code and config
