@@ -48,13 +48,6 @@ public class RotatedBakedModel implements BakedModel {
         }
     }
 
-    /**
-     * The wrapped model buckets its quads by un-rotated face, but callers ask for the
-     * post-rotation face -- and only ask at all when that face is unoccluded. Serving
-     * bucket s from the wrapped bucket of the same name means the wrong quads disappear
-     * when a neighbour occludes s. Bucket s must instead come from the wrapped bucket d
-     * for which rotate(d) == s.
-     */
     private static Direction[] inverseFaceMap(Matrix4f rotation) {
         Matrix4f rot = new Matrix4f(rotation);
         Direction[] inverse = new Direction[6];

@@ -21,7 +21,7 @@ public final class VanillinCompat {
 
         String mode = Config.VANILLIN_COMPAT_MODE.get();
         if ("ALWAYS_LBE".equalsIgnoreCase(mode)) {
-            LegendaryBlockEntities.LOG.info("Vanillin compat: ALWAYS_LBE — LBE handles all block entities.");
+            LegendaryBlockEntities.LOG.info("Vanillin compat: ALWAYS_LBE. LBE handles all block entities.");
             return false;
         }
         if ("DEFER_TO_VANILLIN".equalsIgnoreCase(mode)) {
@@ -36,11 +36,11 @@ public final class VanillinCompat {
         boolean backendOn = isFlywheelBackendOn();
         if (backendOn) {
             LegendaryBlockEntities.LOG.info(
-                    "Vanillin detected with Flywheel backend ON — deferring vanilla chests/bells/shulkers to Vanillin. "
+                    "Vanillin detected with Flywheel backend ON, deferring vanilla chests/bells/shulkers to Vanillin. "
                             + "LBE still optimizes modded chests.");
         } else {
             LegendaryBlockEntities.LOG.info(
-                    "Vanillin present but Flywheel backend is OFF — LBE will handle vanilla block entities itself.");
+                    "Vanillin present but Flywheel backend is OFF, LBE will handle vanilla block entities itself.");
         }
         return backendOn;
     }

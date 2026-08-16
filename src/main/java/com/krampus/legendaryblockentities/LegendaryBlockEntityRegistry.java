@@ -21,7 +21,6 @@ public final class LegendaryBlockEntityRegistry {
     public static final Set<Block> BLOCKS = new HashSet<>();
     public static final Set<BlockEntityType<?>> BLOCK_ENTITY_TYPES = new HashSet<>();
 
-    /** Blockstate-equivalent model rotation, in degrees, matching the "x"/"y" keys of a blockstate variant. */
     public record Rot(int x, int y) {
         public static final Rot NONE = new Rot(0, 0);
     }
@@ -62,14 +61,13 @@ public final class LegendaryBlockEntityRegistry {
         DYNAMIC_INJECT.put(block, new DynamicBinding(baseModel, rotation));
     }
 
-    /** Standard horizontal-facing to blockstate "y" mapping (north = 0). */
     public static int facingYAngle(BlockState state) {
         if (!state.hasProperty(HorizontalDirectionalBlock.FACING)) return 0;
         return switch (state.getValue(HorizontalDirectionalBlock.FACING)) {
             case EAST -> 90;
             case SOUTH -> 180;
             case WEST -> 270;
-            default -> 0; // NORTH
+            default -> 0;
         };
     }
 

@@ -52,23 +52,8 @@ public final class LBESetup {
             "trapped_copper_chest", "trapped_obsidian_chest", "trapped_dirt_chest"
     };
 
-    /**
-     * Guards {@link #ensureDynamicBindings()} so the registry scan runs at most once
-     * (unless it fails, in which case it is allowed to retry on a later reload).
-     */
     private static final AtomicBoolean DYNAMIC_BINDINGS_DONE = new AtomicBoolean(false);
 
-    /**
-     * Populate {@link LegendaryBlockEntityRegistry#DYNAMIC_INJECT} independently of
-     * client-setup timing.
-     *
-     * Under ModernFix the model bake can run on a worker thread BEFORE the
-     * FMLClientSetupEvent enqueued work that registers the chest overrides. If we relied
-     * on that work to populate the bindings, the body-injection in
-     * {@code ModelEvents.onModifyBakingResult} could find an empty map and render nothing.
-     * Calling this from the bake event guarantees the bindings exist whenever injection
-     * runs. The block registry is frozen by bake time, so the scan is safe off-thread.
-     */
     public static void ensureDynamicBindings() {
         if (!DYNAMIC_BINDINGS_DONE.compareAndSet(false, true)) return;
         try {
@@ -93,7 +78,6 @@ public final class LBESetup {
             DYNAMIC_BINDINGS_DONE.set(false);
         }
     }
-
 
     private static void bindVanillaDynamicModels() {
         if (Config.OPTIMIZE_CHESTS.get()) {
@@ -143,7 +127,6 @@ public final class LBESetup {
         });
     }
 
-    /** Shulker boxes rotate on X as well as Y; mapping transcribed from our shulker_box.json. */
     private static void bindShulkerBox(Block block, String colorPrefix) {
         final ResourceLocation base =
                 new ResourceLocation("minecraft", "block/dynamic_" + colorPrefix + "shulker_box");
@@ -167,7 +150,6 @@ public final class LBESetup {
         };
     }
 
-    /** Wall attachments use a different facing offset than floor/ceiling; see bell.json. */
     private static int bellYAngle(BlockState state) {
         BellAttachType attachment = state.getValue(BellBlock.ATTACHMENT);
         Direction facing = state.getValue(BellBlock.FACING);
@@ -176,14 +158,14 @@ public final class LBESetup {
                 case NORTH -> 270;
                 case SOUTH -> 90;
                 case WEST -> 180;
-                default -> 0; // EAST
+                default -> 0;
             };
         }
         return switch (facing) {
             case SOUTH -> 180;
             case EAST -> 90;
             case WEST -> 270;
-            default -> 0; // NORTH
+            default -> 0;
         };
     }
 
@@ -213,7 +195,6 @@ public final class LBESetup {
         LegendaryBlockEntities.LOG.info("Bound {} Quark chest blocks for dynamic body injection", boundCount);
     }
 
-    /** Iron Chests: full/trunk geometry is authored 180-rotated, so rotate by facing + 180. */
     private static void bindIronDynamicModels() {
         int boundCount = 0;
         for (String name : IRON_CHEST_NAMES) {
@@ -222,13 +203,12 @@ public final class LBESetup {
             final String modelPath = "block/" + name + "_lbe";
             LegendaryBlockEntityRegistry.bindDynamicModel(block,
                     state -> new ResourceLocation("ironchest", modelPath),
-                    true, 180 /* +180 cancels the pre-rotated ic_ full/trunk templates */);
+                    true, 180 );
             boundCount++;
         }
         LegendaryBlockEntities.LOG.info("Bound {} Iron Chests blocks for dynamic body injection", boundCount);
     }
 
-    /** BetterEnd / BetterNether: per-facing rotation, base differs by ChestType (_lbe / _left_lbe / _right_lbe). */
     private static void bindBclibDynamicModels(String namespace, String[] names) {
         int boundCount = 0;
         for (String name : names) {

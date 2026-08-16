@@ -23,36 +23,34 @@ public final class Config {
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
-        b.comment("Toggle which block entities to optimize. Changes require restart.");
+        b.comment("Toggle which block entities to optimize. Do not change param in this config with the game open");
         b.push("optimizations");
 
-        OPTIMIZE_CHESTS = b.comment("Optimize chests, trapped chests, and ender chests.")
+        OPTIMIZE_CHESTS = b.comment("Optimize chests, trapped chests, and ender chests")
                 .define("chests", true);
-        OPTIMIZE_BEDS = b.comment("Optimize all 16 bed colors.")
+        OPTIMIZE_BEDS = b.comment("Optimize all 16 bed colors")
                 .define("beds", true);
-        OPTIMIZE_BELLS = b.comment("Optimize bells.")
+        OPTIMIZE_BELLS = b.comment("Optimize bells")
                 .define("bells", true);
-        OPTIMIZE_SHULKER_BOXES = b.comment("Optimize all shulker box variants (17 colors).")
+        OPTIMIZE_SHULKER_BOXES = b.comment("Optimize all shulker box variants (17 colors)")
                 .define("shulker_boxes", true);
-        OPTIMIZE_QUARK_CHESTS = b.comment("Optimize Quark variant chests (requires Quark to be installed).")
+        OPTIMIZE_QUARK_CHESTS = b.comment("Optimize Quark variant chests (requires Quark to be installed)")
                 .define("quark_chests", true);
-        OPTIMIZE_BETTER_END_CHESTS = b.comment("Optimize BetterEnd chests (requires BetterEnd + BCLib).")
+        OPTIMIZE_BETTER_END_CHESTS = b.comment("Optimize BetterEnd chests (requires BetterEnd + BCLib)")
                 .define("better_end_chests", true);
-        OPTIMIZE_BETTER_NETHER_CHESTS = b.comment("Optimize BetterNether chests (requires BetterNether + BCLib).")
+        OPTIMIZE_BETTER_NETHER_CHESTS = b.comment("Optimize BetterNether chests (requires BetterNether + BCLib)")
                 .define("better_nether_chests", true);
-        OPTIMIZE_IRON_CHESTS = b.comment("Optimize Iron Chests (requires Iron Chests). Crystal chests are excluded.")
+        OPTIMIZE_IRON_CHESTS = b.comment("Optimize Iron Chests (requires Iron Chests). Crystal chests are excluded")
                 .define("iron_chests", true);
 
         b.pop();
         b.push("compatibility");
 
         VANILLIN_COMPAT_MODE = b.comment(
-                        "How to coexist with Vanillin (Flywheel instanced rendering). Changes require restart.",
-                        "  AUTO              - If Vanillin is present and Flywheel's backend is ON, let Vanillin",
-                        "                      handle VANILLA chests/bells/shulkers; LBE keeps optimizing modded chests.",
-                        "  ALWAYS_LBE        - Ignore Vanillin; LBE handles everything (may double-render with Vanillin).",
-                        "  DEFER_TO_VANILLIN - If Vanillin is present at all, always defer vanilla types to it.",
-                        "Note: if you change Flywheel's backend in-game, restart for LBE to re-evaluate.")
+                        "AUTO: if Vanillin is loaded and Flywheel backend is on, Vanillin handles vanilla chests, bells and shulkers while LBE keeps optimizing modded chests",
+                        "ALWAYS_LBE: ignore Vanillin and let LBE handle everything. This can double-render if Vanillin is active",
+                        "DEFER_TO_VANILLIN: if Vanillin is loaded at all, always hand vanilla types to it",
+                        "If you switch Flywheel backend in-game, restart for LBE to re-evaluate")
                 .define("vanillin_compat_mode", "AUTO",
                         o -> o instanceof String s &&
                                 List.of("AUTO", "ALWAYS_LBE", "DEFER_TO_VANILLIN").contains(s.toUpperCase()));

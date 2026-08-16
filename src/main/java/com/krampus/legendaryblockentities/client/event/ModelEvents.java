@@ -101,8 +101,7 @@ public class ModelEvents {
                 "trapped_chest_normal_center", "trapped_chest_normal_left", "trapped_chest_normal_right",
                 "ender_chest_normal_center"};
         for (String name : chestVariants) {
-            // The bare dynamic model is now referenced by code injection rather than only by
-            // our blockstate JSON, so it must be baked even when that JSON loses priority.
+
             event.register(new ResourceLocation("minecraft", "block/" + name));
             event.register(new ResourceLocation("minecraft", "block/" + name + "_lid"));
             event.register(new ResourceLocation("minecraft", "block/" + name + "_trunk"));

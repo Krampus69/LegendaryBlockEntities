@@ -63,8 +63,7 @@ public class ChestBlockEntityRendererOverride extends BlockEntityRendererOverrid
 
         BakedModel model = models[modelSelector.apply(blockEntity)];
         if (model == null) {
-            // Model not resolved yet (e.g. still baking lazily under dynamic resources).
-            // Drop the cached array so we re-resolve next frame, and skip this frame.
+
             this.models = null;
             poseStack.popPose();
             return;
