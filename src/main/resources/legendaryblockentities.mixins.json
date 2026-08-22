@@ -11,7 +11,9 @@
     "IronChestBlockEntityMixin",
     "BellBlockEntityMixin",
     "ShulkerBoxBlockEntityMixin",
-    "EnderChestBlockEntityMixin"
+    "EnderChestBlockEntityMixin",
+    "SignBlockEntityMixin",
+    "SignRendererAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

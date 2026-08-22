@@ -6,6 +6,7 @@ import com.krampus.legendaryblockentities.client.render.BlockEntityRenderConditi
 import com.krampus.legendaryblockentities.client.render.BlockEntityRendererOverride;
 import com.krampus.legendaryblockentities.client.render.ChestBlockEntityRendererOverride;
 import com.krampus.legendaryblockentities.client.render.ShulkerBoxBlockEntityRendererOverride;
+import com.krampus.legendaryblockentities.client.render.SignBlockEntityRendererOverride;
 import com.krampus.legendaryblockentities.LegendaryBlockEntityRegistry.Rot;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
@@ -16,6 +17,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.block.StandingSignBlock;
+import net.minecraft.world.level.block.WallSignBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -50,6 +53,11 @@ public final class LBESetup {
             "iron_chest", "gold_chest", "diamond_chest", "copper_chest", "obsidian_chest", "dirt_chest",
             "trapped_iron_chest", "trapped_gold_chest", "trapped_diamond_chest",
             "trapped_copper_chest", "trapped_obsidian_chest", "trapped_dirt_chest"
+    };
+
+    private static final String[] SIGN_WOODS = {
+            "oak", "spruce", "birch", "jungle", "acacia", "dark_oak",
+            "mangrove", "cherry", "bamboo", "crimson", "warped"
     };
 
     private static final AtomicBoolean DYNAMIC_BINDINGS_DONE = new AtomicBoolean(false);
@@ -113,7 +121,35 @@ public final class LBESetup {
             }
         }
 
+        if (Config.OPTIMIZE_SIGNS.get()) {
+            bindSignDynamicModels();
+        }
+
         LegendaryBlockEntities.LOG.info("Bound vanilla block families for dynamic body injection");
+    }
+
+    private static void bindSignDynamicModels() {
+        for (String wood : SIGN_WOODS) {
+            Block standing = ForgeRegistries.BLOCKS.getValue(
+                    new ResourceLocation("minecraft", wood + "_sign"));
+            if (standing != null) {
+                final ResourceLocation model =
+                        new ResourceLocation("minecraft", "block/lbe_" + wood + "_sign");
+                LegendaryBlockEntityRegistry.bindDynamicModel(standing, state -> model,
+                        state -> new Rot(0, LegendaryBlockEntityRegistry.norm(
+                                state.getValue(StandingSignBlock.ROTATION) * 22.5f)));
+            }
+
+            Block wall = ForgeRegistries.BLOCKS.getValue(
+                    new ResourceLocation("minecraft", wood + "_wall_sign"));
+            if (wall != null) {
+                final ResourceLocation model =
+                        new ResourceLocation("minecraft", "block/lbe_" + wood + "_wall_sign");
+                LegendaryBlockEntityRegistry.bindDynamicModel(wall, state -> model,
+                        state -> new Rot(0, LegendaryBlockEntityRegistry.norm(
+                                state.getValue(WallSignBlock.FACING).toYRot())));
+            }
+        }
     }
 
     private static void bindVanillaChest(Block block, String prefix) {
@@ -289,6 +325,25 @@ public final class LBESetup {
                     renderer
             );
         }
+    }
+
+    public static void setupSigns() {
+        SignBlockEntityRendererOverride renderer = new SignBlockEntityRendererOverride();
+        int registered = 0;
+        for (String wood : SIGN_WOODS) {
+            for (String suffix : new String[]{"_sign", "_wall_sign"}) {
+                Block block = ForgeRegistries.BLOCKS.getValue(
+                        new ResourceLocation("minecraft", wood + suffix));
+                if (block == null) continue;
+                LegendaryBlockEntityRegistry.register(
+                        block, BlockEntityType.SIGN,
+                        BlockEntityRenderCondition.SIGN,
+                        renderer
+                );
+                registered++;
+            }
+        }
+        LegendaryBlockEntities.LOG.info("Registered {} sign variants", registered);
     }
 
     public static void setupBetterEndChests() {

@@ -15,6 +15,7 @@ public final class Config {
     public static final ForgeConfigSpec.BooleanValue OPTIMIZE_BEDS;
     public static final ForgeConfigSpec.BooleanValue OPTIMIZE_BELLS;
     public static final ForgeConfigSpec.BooleanValue OPTIMIZE_SHULKER_BOXES;
+    public static final ForgeConfigSpec.BooleanValue OPTIMIZE_SIGNS;
     public static final ForgeConfigSpec.BooleanValue OPTIMIZE_QUARK_CHESTS;
     public static final ForgeConfigSpec.BooleanValue OPTIMIZE_BETTER_END_CHESTS;
     public static final ForgeConfigSpec.BooleanValue OPTIMIZE_BETTER_NETHER_CHESTS;
@@ -34,6 +35,8 @@ public final class Config {
                 .define("bells", true);
         OPTIMIZE_SHULKER_BOXES = b.comment("Optimize all shulker box variants (17 colors)")
                 .define("shulker_boxes", true);
+        OPTIMIZE_SIGNS = b.comment("Optimize standing and wall signs (all 11 vanilla wood types). Hanging signs are not affected")
+                .define("signs", true);
         OPTIMIZE_QUARK_CHESTS = b.comment("Optimize Quark variant chests (requires Quark to be installed)")
                 .define("quark_chests", true);
         OPTIMIZE_BETTER_END_CHESTS = b.comment("Optimize BetterEnd chests (requires BetterEnd + BCLib)")
@@ -63,9 +66,9 @@ public final class Config {
 
     @SubscribeEvent
     public static void onLoad(ModConfigEvent.Loading event) {
-        LegendaryBlockEntities.LOG.info("Config loaded: chests={}, beds={}, bells={}, shulkers={}, quark={}, betterend={}, betternether={}, iron={}, vanillinCompat={}",
+        LegendaryBlockEntities.LOG.info("Config loaded: chests={}, beds={}, bells={}, shulkers={}, signs={}, quark={}, betterend={}, betternether={}, iron={}, vanillinCompat={}",
                 OPTIMIZE_CHESTS.get(), OPTIMIZE_BEDS.get(), OPTIMIZE_BELLS.get(),
-                OPTIMIZE_SHULKER_BOXES.get(), OPTIMIZE_QUARK_CHESTS.get(),
+                OPTIMIZE_SHULKER_BOXES.get(), OPTIMIZE_SIGNS.get(), OPTIMIZE_QUARK_CHESTS.get(),
                 OPTIMIZE_BETTER_END_CHESTS.get(), OPTIMIZE_BETTER_NETHER_CHESTS.get(),
                 OPTIMIZE_IRON_CHESTS.get(), VANILLIN_COMPAT_MODE.get());
     }

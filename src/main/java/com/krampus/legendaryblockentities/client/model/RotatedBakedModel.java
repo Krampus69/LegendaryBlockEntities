@@ -33,18 +33,22 @@ public class RotatedBakedModel implements BakedModel {
     private final Direction[] sourceSide;
     private final Map<List<BakedQuad>, List<BakedQuad>> cache = new IdentityHashMap<>();
 
-    public RotatedBakedModel(BakedModel wrapped, int yAngle) {
+    public RotatedBakedModel(BakedModel wrapped, float yAngle) {
         this(wrapped, 0, yAngle);
     }
 
-    public RotatedBakedModel(BakedModel wrapped, int xAngle, int yAngle) {
+    public RotatedBakedModel(BakedModel wrapped, int xAngle, float yAngle) {
         this.wrapped = wrapped;
-        if (xAngle == 0 && yAngle == 0) {
+        if (xAngle == 0 && yAngle == 0f) {
             this.transformer = null;
             this.sourceSide = null;
+        } else if (yAngle % 90f == 0f) {
+            int y = (int) yAngle;
+            this.transformer = QuadTransformers.applying(centered(xAngle, y));
+            this.sourceSide = inverseFaceMap(BlockModelRotation.by(xAngle, y).getRotation().getMatrix());
         } else {
-            this.transformer = QuadTransformers.applying(centered(xAngle, yAngle));
-            this.sourceSide = inverseFaceMap(BlockModelRotation.by(xAngle, yAngle).getRotation().getMatrix());
+            this.transformer = QuadTransformers.applying(freeCentered(xAngle, yAngle));
+            this.sourceSide = null;
         }
     }
 
@@ -69,6 +73,15 @@ public class RotatedBakedModel implements BakedModel {
 
     private Direction sourceSide(@Nullable Direction side) {
         return (side == null || sourceSide == null) ? side : sourceSide[side.ordinal()];
+    }
+
+    private static Transformation freeCentered(int xAngle, float yAngle) {
+        Matrix4f m = new Matrix4f()
+                .translate(0.5f, 0.5f, 0.5f)
+                .rotateY(-yAngle * ((float) Math.PI / 180f))
+                .rotateX(-xAngle * ((float) Math.PI / 180f))
+                .translate(-0.5f, -0.5f, -0.5f);
+        return new Transformation(m);
     }
 
     private static Transformation centered(int xAngle, int yAngle) {

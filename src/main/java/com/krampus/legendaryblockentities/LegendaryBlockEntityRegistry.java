@@ -21,8 +21,8 @@ public final class LegendaryBlockEntityRegistry {
     public static final Set<Block> BLOCKS = new HashSet<>();
     public static final Set<BlockEntityType<?>> BLOCK_ENTITY_TYPES = new HashSet<>();
 
-    public record Rot(int x, int y) {
-        public static final Rot NONE = new Rot(0, 0);
+    public record Rot(int x, float y) {
+        public static final Rot NONE = new Rot(0, 0f);
     }
 
     public record DynamicBinding(Function<BlockState, ResourceLocation> baseModel,
@@ -73,5 +73,9 @@ public final class LegendaryBlockEntityRegistry {
 
     public static int norm(int degrees) {
         return ((degrees % 360) + 360) % 360;
+    }
+
+    public static float norm(float degrees) {
+        return ((degrees % 360f) + 360f) % 360f;
     }
 }

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/template_sign_standing",
+  "textures": {
+    "sign": "minecraft:entity/signs/birch",
+    "particle": "minecraft:block/birch_planks"
+  }
+}

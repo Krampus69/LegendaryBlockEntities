@@ -1,4 +1,4 @@
 legendaryblockentities-1.20.1 Changelog
-0.10.0
+0.11.0
 ====
-fixed typos in code and config
+Added optimizations on signs (heavy CPU relief especially on modded structures using them as decor)

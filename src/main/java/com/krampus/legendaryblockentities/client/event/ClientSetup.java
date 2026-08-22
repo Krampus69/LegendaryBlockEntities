@@ -51,6 +51,10 @@ public class ClientSetup {
                 LBESetup.setupShulkerBoxes();
             }
 
+            if (Config.OPTIMIZE_SIGNS.get() && !deferVanilla) {
+                LBESetup.setupSigns();
+            }
+
             if (Config.OPTIMIZE_QUARK_CHESTS.get()) {
                 try {
                     if (net.minecraftforge.fml.ModList.get().isLoaded("quark")) {

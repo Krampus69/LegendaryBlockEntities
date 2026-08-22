@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/template_sign_standing",
+  "textures": {
+    "sign": "minecraft:entity/signs/mangrove",
+    "particle": "minecraft:block/mangrove_planks"
+  }
+}

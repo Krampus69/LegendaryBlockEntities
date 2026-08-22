@@ -75,7 +75,7 @@ public class ModelEvents {
 
                     LegendaryBlockEntityRegistry.Rot rot = binding.rotation().apply(state);
                     ModelResourceLocation mrl = BlockModelShaper.stateToModelLocation(blockId, state);
-                    models.put(mrl, (rot.x() == 0 && rot.y() == 0)
+                    models.put(mrl, (rot.x() == 0 && rot.y() == 0f)
                             ? dynamic : new RotatedBakedModel(dynamic, rot.x(), rot.y()));
                     injected++;
                 }
@@ -164,6 +164,13 @@ public class ModelEvents {
             event.register(new ResourceLocation("minecraft", "block/" + c + "shulker_box_lid"));
             event.register(new ResourceLocation("minecraft", "block/dynamic_" + c + "shulker_box"));
         }
+        String[] signWoods = {"oak", "spruce", "birch", "jungle", "acacia", "dark_oak",
+                "mangrove", "cherry", "bamboo", "crimson", "warped"};
+        for (String wood : signWoods) {
+            event.register(new ResourceLocation("minecraft", "block/lbe_" + wood + "_sign"));
+            event.register(new ResourceLocation("minecraft", "block/lbe_" + wood + "_wall_sign"));
+        }
+
         String[] quarkWoods = {"oak", "spruce", "birch", "jungle", "dark_oak", "acacia", "mangrove", "cherry",
                 "bamboo", "crimson", "warped", "azalea", "blossom", "ancient", "nether_brick", "purpur", "prismarine"};
         for (String wood : quarkWoods) {
